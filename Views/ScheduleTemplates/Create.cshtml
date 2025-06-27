@@ -1,0 +1,43 @@
+@model PunchServerMVC.Models.ScheduleTemplate
+@{
+    ViewData["Title"] = "Create Template";
+}
+
+<h2>Create Schedule Template</h2>
+
+<form asp-action="Create" method="post">
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="ShiftStart" class="form-label"></label>
+        <input asp-for="ShiftStart" class="form-control" type="time" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="ShiftEnd" class="form-label"></label>
+        <input asp-for="ShiftEnd" class="form-control" type="time" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Type" class="form-label"></label>
+        <input asp-for="Type" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="BreakMinutes" class="form-label">Break (minutes)</label>
+        <input asp-for="BreakMinutes" class="form-control" type="number" min="0" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Days of the Week</label><br />
+        @foreach (DayOfWeek day in Enum.GetValues(typeof(DayOfWeek)))
+        {
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" name="Days" value="@day" />
+                <label class="form-check-label">@day</label>
+            </div>
+        }
+    </div>
+
+    <button type="submit" class="btn btn-success">Create</button>
+    <a href="/ScheduleTemplates" class="btn btn-secondary">Cancel</a>
+</form>

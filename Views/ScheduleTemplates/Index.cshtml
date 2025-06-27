@@ -1,0 +1,38 @@
+@using PunchServerMVC.Models
+@model List<ScheduleTemplate>
+@{
+    ViewData["Title"] = "Schedule Templates";
+}
+
+<h2>Schedule Templates</h2>
+
+<a class="btn btn-primary mb-3" href="/ScheduleTemplates/Create">Add New Template</a>
+
+<table class="table table-bordered table-striped">
+    <thead class="table-dark">
+        <tr>
+            <th>Name</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Type</th>
+            <th>Break (min)</th>
+            <th style="width: 140px;">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var t in Model)
+    {
+        <tr>
+            <td>@t.Name</td>
+            <td>@t.ShiftStart.ToString(@"hh\:mm")</td>
+            <td>@t.ShiftEnd.ToString(@"hh\:mm")</td>
+            <td>@t.Type</td>
+            <td>@t.BreakMinutes</td>
+            <td>
+                <a class="btn btn-sm btn-warning me-1" href="/ScheduleTemplates/Edit/@t.Id">Edit</a>
+                <a class="btn btn-sm btn-danger" href="/ScheduleTemplates/Delete/@t.Id">Delete</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

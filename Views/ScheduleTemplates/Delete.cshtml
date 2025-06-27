@@ -1,0 +1,16 @@
+@model PunchServerMVC.Models.ScheduleTemplate
+@{
+    ViewData["Title"] = "Delete Template";
+}
+
+<h2>Delete Schedule Template</h2>
+
+<div class="alert alert-danger">
+    Are you sure you want to delete the template <strong>@Model.Name</strong>?
+</div>
+
+<form asp-action="DeleteConfirmed" method="post">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">Yes, Delete</button>
+    <a href="/ScheduleTemplates" class="btn btn-secondary">Cancel</a>
+</form>

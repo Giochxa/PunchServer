@@ -1,0 +1,40 @@
+@model PunchServerMVC.Models.ViewModels.DepartmentFormViewModel
+
+@{
+    ViewData["Title"] = "Edit Department";
+}
+
+<h2>Edit Department</h2>
+
+<form asp-action="Edit" method="post">
+    <input type="hidden" asp-for="Department.Id" />
+
+    <div class="mb-3">
+        <label asp-for="Department.Name" class="form-label"></label>
+        <input asp-for="Department.Name" class="form-control" />
+        <span asp-validation-for="Department.Name" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Department.Description" class="form-label"></label>
+        <input asp-for="Department.Description" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Department.OrganisationId" class="form-label">Organisation</label>
+        <select asp-for="Department.OrganisationId" class="form-select"
+                asp-items="@(new SelectList(Model.Organisations, "Id", "Name", Model.Department.OrganisationId))">
+            <option value="">-- Select Organisation --</option>
+        </select>
+        <span asp-validation-for="Department.OrganisationId" class="text-danger"></span>
+    </div>
+
+    <div class="form-check">
+        <input asp-for="Department.IsActive" class="form-check-input" />
+        <label asp-for="Department.IsActive" class="form-check-label"></label>
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-3">Update</button>
+    <a asp-action="Index" class="btn btn-secondary mt-3">Cancel</a>
+</form>
+

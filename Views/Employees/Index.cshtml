@@ -1,0 +1,124 @@
+@model PunchServerMVC.Models.ViewModels.EmployeeFilterViewModel
+
+@{
+    ViewData["Title"] = "Employees";
+}
+
+<h2>Employees</h2>
+
+<a class="btn btn-primary mb-3" href="/Employees/Create">Add New Employee</a>
+
+<form method="get" class="row g-2 mb-4">
+    <div class="col-md-3">
+        <input name="fullName" class="form-control" placeholder="Full Name"
+               value="@Model.FullName" />
+    </div>
+
+    <div class="col-md-3">
+        <input name="personalId" class="form-control" placeholder="Personal ID"
+               value="@Model.PersonalId" />
+    </div>
+
+    <div class="col-md-2">
+        <select name="organisationId" class="form-select" id="organisationFilter">
+            <option value="">All Organisations</option>
+            @foreach (var org in Model.Organisations)
+            {
+                <option value="@org.Id" selected="@(Model.OrganisationId == org.Id ? "selected" : null)">
+                    @org.Name
+                </option>
+            }
+        </select>
+    </div>
+
+    <div class="col-md-2">
+        <select name="departmentId" class="form-select" id="departmentFilter">
+            <option value="">All Departments</option>
+            @foreach (var dept in Model.Departments)
+            {
+                <option value="@dept.Id"
+                        data-org="@dept.OrganisationId"
+                        selected="@(Model.DepartmentId == dept.Id ? "selected" : null)">
+                    @dept.Name
+                </option>
+            }
+        </select>
+    </div>
+
+    <div class="col-md-2">
+        <select name="isActive" class="form-select">
+            <option value="">All Status</option>
+            <option value="true" selected="@(Model.IsActive == true ? "selected" : null)">Active</option>
+            <option value="false" selected="@(Model.IsActive == false ? "selected" : null)">Inactive</option>
+        </select>
+    </div>
+
+    <div class="col-md-12 text-end">
+        <button class="btn btn-outline-primary">Filter</button>
+        <a href="/Employees" class="btn btn-outline-secondary">Reset</a>
+    </div>
+</form>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Full Name</th>
+            <th>Unique ID</th>
+            <th>Personal ID</th>
+            <th>Organisation</th>
+            <th>Department</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var emp in Model.Employees)
+    {
+        <tr>
+            <td>@emp.FullName</td>
+            <td>@emp.UniqueId</td>
+            <td>@emp.PersonalId</td>
+            <td>@Model.Organisations.FirstOrDefault(o => o.Id == emp.OrganisationId)?.Name</td>
+            <td>@Model.Departments.FirstOrDefault(d => d.Id == emp.DepartmentId)?.Name</td>
+            <td>@(emp.IsActive ? "Active" : "Inactive")</td>
+            <td>
+                <a class="btn btn-sm btn-warning" href="/Employees/Edit/@emp.Id">Edit</a>
+                <a class="btn btn-sm btn-danger" href="/Employees/Delete/@emp.Id">Delete</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+@section Scripts {
+    <script>
+        const orgSelect = document.getElementById('organisationFilter');
+        const deptSelect = document.getElementById('departmentFilter');
+
+        function filterDepartmentsByOrg() {
+            const selectedOrg = orgSelect.value;
+            const options = deptSelect.options;
+
+            for (let i = 0; i < options.length; i++) {
+                const opt = options[i];
+                const orgId = opt.getAttribute('data-org');
+
+                if (!opt.value) continue; // Skip "All Departments"
+
+                if (!selectedOrg || orgId === selectedOrg) {
+                    opt.hidden = false;
+                } else {
+                    opt.hidden = true;
+                }
+            }
+
+            const selected = deptSelect.selectedOptions[0];
+            if (selected && selected.hidden) {
+                deptSelect.value = '';
+            }
+        }
+
+        orgSelect.addEventListener('change', filterDepartmentsByOrg);
+        window.addEventListener('DOMContentLoaded', filterDepartmentsByOrg);
+    </script>
+}

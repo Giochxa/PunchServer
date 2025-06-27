@@ -1,0 +1,353 @@
+{
+  "Files": [
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\obj\\Debug\\net8.0\\scopedcss\\projectbundle\\PunchServer.bundle.scp.css",
+      "PackagePath": "staticwebassets\\PunchServer.bundle.scp.css"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\css\\site.css",
+      "PackagePath": "staticwebassets\\css\\site.css"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\favicon.ico",
+      "PackagePath": "staticwebassets\\favicon.ico"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\js\\calendar.js",
+      "PackagePath": "staticwebassets\\js\\calendar.js"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\js\\site.js",
+      "PackagePath": "staticwebassets\\js\\site.js"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\LICENSE",
+      "PackagePath": "staticwebassets\\lib\\bootstrap"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-grid.css"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-grid.css.map"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.min.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-grid.min.css"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.min.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-grid.min.css.map"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.rtl.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-grid.rtl.css"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.rtl.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-grid.rtl.css.map"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.rtl.min.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-grid.rtl.min.css"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-grid.rtl.min.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-grid.rtl.min.css.map"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.css"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.css.map"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.min.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.min.css"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.min.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.min.css.map"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.rtl.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.rtl.css"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.rtl.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.rtl.css.map"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.rtl.min.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.rtl.min.css"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.rtl.min.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-reboot.rtl.min.css.map"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.css"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.css.map"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.min.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.min.css"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.min.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.min.css.map"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.rtl.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.rtl.css"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.rtl.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.rtl.css.map"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.rtl.min.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.rtl.min.css"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.rtl.min.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap-utilities.rtl.min.css.map"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap.css"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap.css.map"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.min.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap.min.css"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.min.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap.min.css.map"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.css"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.css.map"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.min.css",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.min.css"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.min.css.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\css\\bootstrap.rtl.min.css.map"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.bundle.js",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.bundle.js"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.bundle.js.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.bundle.js.map"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.bundle.min.js",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.bundle.min.js"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.bundle.min.js.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.bundle.min.js.map"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.esm.js",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.esm.js"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.esm.js.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.esm.js.map"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.esm.min.js",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.esm.min.js"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.esm.min.js.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.esm.min.js.map"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.js",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.js"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.js.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.js.map"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.min.js",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.min.js"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\bootstrap\\dist\\js\\bootstrap.min.js.map",
+      "PackagePath": "staticwebassets\\lib\\bootstrap\\dist\\js\\bootstrap.min.js.map"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\jquery-validation-unobtrusive\\LICENSE.txt",
+      "PackagePath": "staticwebassets\\lib\\jquery-validation-unobtrusive\\LICENSE.txt"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\jquery-validation-unobtrusive\\jquery.validate.unobtrusive.js",
+      "PackagePath": "staticwebassets\\lib\\jquery-validation-unobtrusive\\jquery.validate.unobtrusive.js"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\jquery-validation-unobtrusive\\jquery.validate.unobtrusive.min.js",
+      "PackagePath": "staticwebassets\\lib\\jquery-validation-unobtrusive\\jquery.validate.unobtrusive.min.js"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\jquery-validation\\LICENSE.md",
+      "PackagePath": "staticwebassets\\lib\\jquery-validation\\LICENSE.md"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\jquery-validation\\dist\\additional-methods.js",
+      "PackagePath": "staticwebassets\\lib\\jquery-validation\\dist\\additional-methods.js"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\jquery-validation\\dist\\additional-methods.min.js",
+      "PackagePath": "staticwebassets\\lib\\jquery-validation\\dist\\additional-methods.min.js"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\jquery-validation\\dist\\jquery.validate.js",
+      "PackagePath": "staticwebassets\\lib\\jquery-validation\\dist\\jquery.validate.js"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\jquery-validation\\dist\\jquery.validate.min.js",
+      "PackagePath": "staticwebassets\\lib\\jquery-validation\\dist\\jquery.validate.min.js"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\jquery\\LICENSE.txt",
+      "PackagePath": "staticwebassets\\lib\\jquery\\LICENSE.txt"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\jquery\\dist\\jquery.js",
+      "PackagePath": "staticwebassets\\lib\\jquery\\dist\\jquery.js"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\jquery\\dist\\jquery.min.js",
+      "PackagePath": "staticwebassets\\lib\\jquery\\dist\\jquery.min.js"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\lib\\jquery\\dist\\jquery.min.map",
+      "PackagePath": "staticwebassets\\lib\\jquery\\dist\\jquery.min.map"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\punch_images\\1001_20250616_112742.jpg",
+      "PackagePath": "staticwebassets\\punch_images\\1001_20250616_112742.jpg"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\punch_images\\1001_20250616_123157 - Copy.jpg",
+      "PackagePath": "staticwebassets\\punch_images\\1001_20250616_123157 - Copy.jpg"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\punch_images\\1002_20250616_112742.jpg",
+      "PackagePath": "staticwebassets\\punch_images\\1002_20250616_112742.jpg"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\punch_images\\1003_20250616_112742.jpg",
+      "PackagePath": "staticwebassets\\punch_images\\1003_20250616_112742.jpg"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\punch_images\\1003_20250616_112943.jpg",
+      "PackagePath": "staticwebassets\\punch_images\\1003_20250616_112943.jpg"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\punch_images\\1_20250616_124526.jpg",
+      "PackagePath": "staticwebassets\\punch_images\\1_20250616_124526.jpg"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\punch_images\\1_20250616_180731.jpg",
+      "PackagePath": "staticwebassets\\punch_images\\1_20250616_180731.jpg"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\punch_images\\1_20250618_173614.jpg",
+      "PackagePath": "staticwebassets\\punch_images\\1_20250618_173614.jpg"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\punch_images\\2_20250616_120811.jpg",
+      "PackagePath": "staticwebassets\\punch_images\\2_20250616_120811.jpg"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\punch_images\\2_20250616_164742.jpg",
+      "PackagePath": "staticwebassets\\punch_images\\2_20250616_164742.jpg"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\punch_images\\2_20250617_131755.jpg",
+      "PackagePath": "staticwebassets\\punch_images\\2_20250617_131755.jpg"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\punch_images\\2_20250617_161848.jpg",
+      "PackagePath": "staticwebassets\\punch_images\\2_20250617_161848.jpg"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\punch_images\\3_20250616_11562905.jpg",
+      "PackagePath": "staticwebassets\\punch_images\\3_20250616_11562905.jpg"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\punch_images\\3_20250616_123934.jpg",
+      "PackagePath": "staticwebassets\\punch_images\\3_20250616_123934.jpg"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\punch_images\\5_20250616_171941.jpg",
+      "PackagePath": "staticwebassets\\punch_images\\5_20250616_171941.jpg"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\punch_images\\5_20250617_132059.jpg",
+      "PackagePath": "staticwebassets\\punch_images\\5_20250617_132059.jpg"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\punch_images\\5_20250617_161729.jpg",
+      "PackagePath": "staticwebassets\\punch_images\\5_20250617_161729.jpg"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\punch_images\\5_20250617_181001.jpg",
+      "PackagePath": "staticwebassets\\punch_images\\5_20250617_181001.jpg"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\punch_images\\6_20250618_151445.jpg",
+      "PackagePath": "staticwebassets\\punch_images\\6_20250618_151445.jpg"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\punch_images\\6_20250618_151800.jpg",
+      "PackagePath": "staticwebassets\\punch_images\\6_20250618_151800.jpg"
+    },
+    {
+      "Id": "C:\\Users\\gchkhaidze\\PunchServer\\wwwroot\\punch_images\\7_20250618_151250.jpg",
+      "PackagePath": "staticwebassets\\punch_images\\7_20250618_151250.jpg"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.PunchServer.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.build.PunchServer.props",
+      "PackagePath": "build\\PunchServer.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildMultiTargeting.PunchServer.props",
+      "PackagePath": "buildMultiTargeting\\PunchServer.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildTransitive.PunchServer.props",
+      "PackagePath": "buildTransitive\\PunchServer.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

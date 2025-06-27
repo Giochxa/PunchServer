@@ -1,0 +1,35 @@
+@model IEnumerable<PunchServerMVC.Models.Department>
+
+@{
+    ViewData["Title"] = "Departments";
+}
+
+<h2>Departments</h2>
+<a asp-action="Create" class="btn btn-primary mb-3">Add Department</a>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Active</th>
+            <th>Created</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var dept in Model)
+    {
+        <tr>
+            <td>@dept.Name</td>
+            <td>@dept.Description</td>
+            <td>@dept.IsActive</td>
+            <td>@dept.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd")</td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@dept.Id" class="btn btn-sm btn-warning">Edit</a>
+                <a asp-action="Delete" asp-route-id="@dept.Id" class="btn btn-sm btn-danger">Delete</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

@@ -1,0 +1,67 @@
+@model List<PunchServerMVC.Models.Employee>
+
+@{
+    ViewData["Title"] = "Weekly Schedule Grid";
+    var schedules = ViewBag.Schedules as List<PunchServerMVC.Models.Schedule> ?? new List<PunchServerMVC.Models.Schedule>();
+    var days = Enum.GetValues(typeof(DayOfWeek))
+                   .Cast<DayOfWeek>()
+                   .OrderBy(d => d == DayOfWeek.Sunday ? 7 : (int)d) // Monday first
+                   .ToList();
+}
+
+<style>
+    .weekend-header {
+        background-color: #6b0b0b; /* light red */
+        font-weight: bold;
+    }
+    .weekend-cell {
+        background-color: #6b0b0b;
+    }
+</style>
+
+<h2>Weekly Grid Schedule</h2>
+
+<table class="table table-bordered text-center">
+    <thead>
+        <tr>
+            <th>Employee</th>
+            @foreach (var day in days)
+            {
+                var isWeekend = day == DayOfWeek.Saturday || day == DayOfWeek.Sunday;
+                <th class="@(isWeekend ? "weekend-header" : "")">@day</th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var emp in Model)
+    {
+        <tr>
+            <td>@emp.FullName</td>
+            @foreach (var day in days)
+            {
+                var isWeekend = day == DayOfWeek.Saturday || day == DayOfWeek.Sunday;
+                var dailySchedules = schedules
+                    .Where(s => s.EmployeeId == emp.Id && s.Days != null && s.Days.Contains(day))
+                    .ToList();
+
+                <td class="@(isWeekend ? "weekend-cell" : "")">
+                    @if (dailySchedules.Any())
+                    {
+                        foreach (var sched in dailySchedules)
+                        {
+                            <div>
+                                <strong>@sched.ShiftStart.ToString("hh\\:mm") - @sched.ShiftEnd.ToString("hh\\:mm")</strong><br />
+                                <small>@sched.ScheduleType</small>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <span>—</span>
+                    }
+                </td>
+            }
+        </tr>
+    }
+    </tbody>
+</table>

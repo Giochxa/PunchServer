@@ -1,0 +1,117 @@
+@model PunchServerMVC.Models.Schedule
+@{
+    ViewData["Title"] = "Edit Schedule";
+    var employees = ViewBag.Employees as IEnumerable<PunchServerMVC.Models.Employee>;
+    var templates = ViewBag.Templates as IEnumerable<PunchServerMVC.Models.ScheduleTemplate>;
+}
+
+<h2>Edit Schedule</h2>
+
+<form asp-action="Edit" method="post">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="mb-3">
+        <label>Employee</label>
+        <select asp-for="EmployeeId" class="form-control" id="employeeSelect"
+                asp-items="@(new SelectList(employees.Select(e => new {
+                    e.Id,
+                    e.FullName,
+                    Start = e.EmploymentStartDate?.ToString("yyyy-MM-dd"),
+                    End = e.EmploymentEndDate?.ToString("yyyy-MM-dd") ?? ""
+                }), "Id", "FullName", Model.EmployeeId))">
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="StartDate"></label>
+        <input asp-for="StartDate" type="date" class="form-control" id="startDate" />
+        <span asp-validation-for="StartDate" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="EndDate"></label>
+        <input asp-for="EndDate" type="date" class="form-control" id="endDate" />
+        <span asp-validation-for="EndDate" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label>Template (optional)</label>
+        <select id="templateSelect" asp-for="ScheduleTemplateId" class="form-control">
+            <option value="">-- Select Template --</option>
+            @foreach (var t in templates)
+            {
+                <option 
+                    value="@t.Id"
+                    data-start="@t.ShiftStart.ToString("hh\\:mm")"
+                    data-end="@t.ShiftEnd.ToString("hh\\:mm")"
+                    data-type="@t.Type"
+                    data-break="@t.BreakMinutes"
+                    data-days="@string.Join(",", t.Days)"
+                    selected="@(t.Id == Model.ScheduleTemplateId ? "selected" : null)">
+                    @t.Name (@t.ShiftStart - @t.ShiftEnd)
+                </option>
+            }
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label>Shift Start</label>
+        <input asp-for="ShiftStart" type="time" class="form-control" id="shiftStart" />
+    </div>
+
+    <div class="mb-3">
+        <label>Shift End</label>
+        <input asp-for="ShiftEnd" type="time" class="form-control" id="shiftEnd" />
+    </div>
+
+    <div class="mb-3">
+        <label>Break (minutes)</label>
+        <input asp-for="BreakMinutes" type="number" class="form-control" id="breakMinutes" />
+    </div>
+
+    <div class="mb-3">
+        <label>Schedule Type</label>
+        <input asp-for="ScheduleType" class="form-control" id="scheduleType" />
+    </div>
+
+    <div class="mb-3">
+        <label>Days</label><br />
+        @foreach (DayOfWeek day in Enum.GetValues(typeof(DayOfWeek)))
+        {
+            <label class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" name="Days" value="@day" @(Model.Days.Contains(day) ? "checked" : "") />
+                <span class="form-check-label">@day</span>
+            </label>
+        }
+    </div>
+
+    <button type="submit" class="btn btn-success mt-3">Save</button>
+    <a href="/Schedules" class="btn btn-secondary mt-3">Cancel</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.getElementById("templateSelect").addEventListener("change", function () {
+            const selected = this.options[this.selectedIndex];
+            document.getElementById("shiftStart").value = selected.dataset.start || "";
+            document.getElementById("shiftEnd").value = selected.dataset.end || "";
+            document.getElementById("scheduleType").value = selected.dataset.type || "";
+            document.getElementById("breakMinutes").value = selected.dataset.break || "";
+
+            const days = selected.dataset.days;
+            if (days) {
+                const selectedDays = days.split(",");
+                document.querySelectorAll("input[name='Days']").forEach(cb => {
+                    cb.checked = selectedDays.includes(cb.value);
+                });
+            }
+        });
+
+        document.getElementById("employeeSelect").addEventListener("change", function () {
+            const selected = this.options[this.selectedIndex];
+            document.getElementById("startDate").value = selected.dataset.start || "";
+            document.getElementById("endDate").value = selected.dataset.end || "";
+        });
+    </script>
+}

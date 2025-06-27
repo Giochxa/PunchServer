@@ -1,0 +1,122 @@
+@model PunchServerMVC.Models.ViewModels.EmployeeFormViewModel
+
+@{
+    ViewData["Title"] = "Edit Employee";
+}
+
+<h2>Edit Employee</h2>
+
+<form asp-action="Edit" method="post">
+    <partial name="_ValidationScriptsPartial" />
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <input type="hidden" asp-for="Employee.Id" />
+
+    <div class="mb-3">
+        <label asp-for="Employee.FullName"></label>
+        <input asp-for="Employee.FullName" class="form-control" />
+        <span asp-validation-for="Employee.FullName" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Employee.UniqueId"></label>
+        <input asp-for="Employee.UniqueId" class="form-control" />
+        <span asp-validation-for="Employee.UniqueId" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Employee.PersonalId"></label>
+        <input asp-for="Employee.PersonalId" class="form-control" />
+        <span asp-validation-for="Employee.PersonalId" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Employee.OrganisationId">Organisation</label>
+        <select asp-for="Employee.OrganisationId" class="form-select" id="organisationDropdown"
+                asp-items="@(new SelectList(Model.Organisations, "Id", "Name", Model.Employee.OrganisationId))">
+            <option value="">-- Select Organisation --</option>
+        </select>
+        <span asp-validation-for="Employee.OrganisationId" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Employee.DepartmentId">Department</label>
+        <select asp-for="Employee.DepartmentId" class="form-select" id="departmentDropdown">
+            <option value="">-- Select Department --</option>
+            @if (Model.Employee.OrganisationId != null)
+            {
+                foreach (var dept in Model.Departments.Where(d => d.OrganisationId == Model.Employee.OrganisationId))
+                {
+                    <option value="@dept.Id" selected="@(dept.Id == Model.Employee.DepartmentId)">
+                        @dept.Name
+                    </option>
+                }
+            }
+        </select>
+        <span asp-validation-for="Employee.DepartmentId" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Employee.EmploymentStartDate"></label>
+        <input asp-for="Employee.EmploymentStartDate" type="date" class="form-control" />
+        <span asp-validation-for="Employee.EmploymentStartDate" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Employee.EmploymentEndDate"></label>
+        <input asp-for="Employee.EmploymentEndDate" type="date" class="form-control" />
+        <span asp-validation-for="Employee.EmploymentEndDate" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Employee.Position"></label>
+        <input asp-for="Employee.Position" class="form-control" />
+        <span asp-validation-for="Employee.Position" class="text-danger"></span>
+    </div>
+
+    <div class="form-check mb-3">
+        <input asp-for="Employee.IsActive" class="form-check-input" />
+        <label asp-for="Employee.IsActive" class="form-check-label"></label>
+    </div>
+
+    <button type="submit" class="btn btn-success">Save</button>
+    <a href="/Employees" class="btn btn-secondary">Cancel</a>
+</form>
+
+@section Scripts {
+    <script>
+        function loadDepartments(orgId, selectedDeptId) {
+            const deptDropdown = document.getElementById('departmentDropdown');
+            deptDropdown.innerHTML = '<option value="">-- Select Department --</option>';
+
+            if (!orgId) return;
+
+            fetch(`/api/departments/by-organisation/${orgId}`)
+                .then(res => res.json())
+                .then(data => {
+                    data.forEach(dept => {
+                        const opt = document.createElement('option');
+                        opt.value = dept.id;
+                        opt.text = dept.name;
+                        if (dept.id == selectedDeptId) opt.selected = true;
+                        deptDropdown.appendChild(opt);
+                    });
+                })
+                .catch(err => console.error('Error loading departments:', err));
+        }
+
+        const orgDropdown = document.getElementById('organisationDropdown');
+        orgDropdown.addEventListener('change', function () {
+            loadDepartments(this.value, null);
+        });
+
+        // Load initially if editing an employee
+        window.addEventListener('load', () => {
+            const selectedOrgId = orgDropdown.value;
+            const selectedDeptId = "@Model.Employee.DepartmentId";
+            if (selectedOrgId) {
+                loadDepartments(selectedOrgId, selectedDeptId);
+            }
+        });
+    </script>
+}

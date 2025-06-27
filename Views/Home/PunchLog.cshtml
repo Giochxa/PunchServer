@@ -1,0 +1,38 @@
+@model List<PunchServerMVC.Models.Punch>
+
+@{
+    ViewData["Title"] = "Punch Log";
+}
+
+<h2>Punch Log</h2>
+
+<table border="1" cellpadding="8" cellspacing="0">
+    <thead>
+        <tr>
+            <th>Timestamp</th>
+            <th>Punch Type</th>
+            <th>Employee ID</th>
+            <th>Employee</th>
+            <th>Created At</th>
+            <th>Image</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var punch in Model)
+    {
+        <tr>
+            <td>@punch.Timestamp.ToLocalTime()</td>
+            <td>@punch.PunchType</td>
+            <td>@punch.EmployeeId</td>
+            <td>@(punch.Employee?.FullName ?? "Unknown")</td>
+            <td>@punch.CreatedAt.ToLocalTime()</td>
+            <td>
+                <img src="/punch_images/@punch.ImageUrl" 
+                     alt="Punch Image" 
+                     style="width:100px;height:auto;" 
+                     onerror="this.style.display='none'" />
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

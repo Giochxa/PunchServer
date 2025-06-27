@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "sXcnhGZ1Ph0=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\gchkhaidze\\PunchServer\\PunchServer.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\gchkhaidze\\.nuget\\packages\\litedb\\5.0.21\\litedb.5.0.21.nupkg.sha512",
+    "C:\\Users\\gchkhaidze\\.nuget\\packages\\system.buffers\\4.5.1\\system.buffers.4.5.1.nupkg.sha512"
+  ],
+  "logs": []
+}

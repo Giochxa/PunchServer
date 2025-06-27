@@ -1,0 +1,205 @@
+@using PunchServerMVC.Models.ViewModels
+@model CalendarViewModel
+@inject Microsoft.AspNetCore.Mvc.IUrlHelper Url
+
+@{
+    ViewData["Title"] = "Calendar View";
+    var monthName = new DateTime(Model.Year, Model.Month, 1).ToString("MMMM yyyy");
+}
+
+<h2>@monthName</h2>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-3">
+        <select name="organisationId" id="organisationFilter" class="form-select">
+            <option value="">All Organisations</option>
+            @foreach (var org in Model.Organisations)
+            {
+                <option value="@org.Id" selected="@(Model.SelectedOrganisationId == org.Id)">
+                    @org.Name
+                </option>
+            }
+        </select>
+    </div>
+
+    <div class="col-md-3">
+        <select name="departmentId" id="departmentFilter" class="form-select">
+            <option value="">All Departments</option>
+            @foreach (var dept in Model.Departments)
+            {
+                <option value="@dept.Id" data-org="@dept.OrganisationId"
+                        selected="@(Model.SelectedDepartmentId == dept.Id)">
+                    @dept.Name
+                </option>
+            }
+        </select>
+    </div>
+
+    <div class="col-md-3">
+        <select name="employeeId" class="form-select">
+            <option value="">All Employees</option>
+            @foreach (var emp in Model.Employees)
+            {
+                <option value="@emp.Id" selected="@(Model.SelectedEmployeeId == emp.Id)">
+                    @emp.FullName
+                </option>
+            }
+        </select>
+    </div>
+
+    <div class="col-md-3 text-end">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a href="@Url.Action("Calendar")" class="btn btn-outline-secondary">Reset</a>
+    </div>
+</form>
+
+<div class="d-flex justify-content-between mb-3">
+    <a class="btn btn-outline-secondary"
+       href="@Url.Action("Calendar", new {
+           employeeId = Model.SelectedEmployeeId,
+           organisationId = Model.SelectedOrganisationId,
+           departmentId = Model.SelectedDepartmentId,
+           month = (Model.Month == 1 ? 12 : Model.Month - 1),
+           year = (Model.Month == 1 ? Model.Year - 1 : Model.Year)
+       })">Previous</a>
+
+    <a class="btn btn-outline-secondary"
+       href="@Url.Action("Calendar", new {
+           employeeId = Model.SelectedEmployeeId,
+           organisationId = Model.SelectedOrganisationId,
+           departmentId = Model.SelectedDepartmentId,
+           month = (Model.Month == 12 ? 1 : Model.Month + 1),
+           year = (Model.Month == 12 ? Model.Year + 1 : Model.Year)
+       })">Next</a>
+</div>
+
+<table class="table table-bordered calendar text-center">
+    <thead>
+        <tr>
+            @{
+                var daysOfWeek = Enum.GetValues(typeof(DayOfWeek))
+                    .Cast<DayOfWeek>()
+                    .OrderBy(d => (int)d == 0 ? 7 : (int)d); // Monday-first
+            }
+            @foreach (var day in daysOfWeek)
+            {
+                var weekend = day == DayOfWeek.Saturday || day == DayOfWeek.Sunday;
+                <th class="@(weekend ? "bg-light text-danger" : "")">@day</th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            var firstDayOfMonth = new DateTime(Model.Year, Model.Month, 1);
+            var daysInMonth = DateTime.DaysInMonth(Model.Year, Model.Month);
+            var startOffset = ((int)firstDayOfMonth.DayOfWeek + 6) % 7;
+            var totalCells = (int)Math.Ceiling((startOffset + daysInMonth) / 7.0) * 7;
+
+            for (int cell = 0; cell < totalCells; cell++)
+            {
+                if (cell % 7 == 0)
+                {
+                    @:<tr>
+                }
+
+                var isValidDay = cell >= startOffset && (cell - startOffset + 1) <= daysInMonth;
+                var currentDate = isValidDay ? firstDayOfMonth.AddDays(cell - startOffset) : DateTime.MinValue;
+                var isWeekend = isValidDay && (currentDate.DayOfWeek == DayOfWeek.Saturday || currentDate.DayOfWeek == DayOfWeek.Sunday);
+                List<CalendarEntry> entries = null;
+                var hasData = isValidDay && Model.CalendarEntries.TryGetValue(currentDate.Date, out entries);
+
+                <td class="align-top @(isWeekend ? "bg-light text-danger" : "")">
+                    @if (isValidDay)
+                    {
+                        <strong>@currentDate.Day</strong>
+                        @if (hasData && entries != null)
+                        {
+                            foreach (var group in entries.GroupBy(e => e.EmployeeName))
+                            {
+                                <div class="border-top mt-1 pt-1 small">
+                                    <strong>@group.Key</strong><br />
+                                    @{
+                                        
+                                        var punches = group.Where(e => e.IsPunch).OrderBy(e => e.PunchTime).ToList();
+var schedule = group.FirstOrDefault(e => !e.IsPunch);
+
+if (schedule != null)
+{
+    <div class="text-primary">
+        Schedule: @schedule.ScheduleStart - @schedule.ScheduleEnd
+    </div>
+}
+
+if (punches.Any())
+{
+    var punchIn = punches.First().PunchTime;
+    var punchOut = punches.Count > 1 ? punches.Last().PunchTime : (DateTime?)null;
+
+    var expectedStart = schedule?.ScheduleStart ?? TimeSpan.Zero;
+    var expectedEnd = schedule?.ScheduleEnd ?? TimeSpan.Zero;
+
+    var punchInClass = (punchIn.TimeOfDay > expectedStart.Add(TimeSpan.FromMinutes(5))) ? "text-danger" : "text-success";
+    var punchOutClass = (punchOut != null && punchOut.Value.TimeOfDay < expectedEnd.Subtract(TimeSpan.FromMinutes(5))) ? "text-danger" : "text-success";
+
+    <div>
+        <span class="@punchInClass">In: @punchIn.ToShortTimeString()</span>
+        @if (punchOut != null)
+        {
+            <span class="ms-2 @punchOutClass">- Out: @punchOut.Value.ToShortTimeString()</span>
+        }
+    </div>
+}
+
+
+                                    }
+                                    
+                                </div>
+                            }
+                        }
+                    }
+                </td>
+
+                if (cell % 7 == 6)
+                {
+                    @:</tr>
+                }
+            }
+        }
+    </tbody>
+</table>
+
+<style>
+    .calendar td {
+        height: 130px;
+        vertical-align: top;
+        padding: 6px;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        const orgFilter = document.getElementById('organisationFilter');
+        const deptFilter = document.getElementById('departmentFilter');
+
+        function filterDepartments() {
+            const selectedOrg = orgFilter.value;
+            const options = deptFilter.options;
+
+            for (let i = 0; i < options.length; i++) {
+                const opt = options[i];
+                const orgId = opt.getAttribute('data-org');
+
+                if (!opt.value) continue;
+                opt.hidden = (!selectedOrg || orgId === selectedOrg) ? false : true;
+            }
+
+            const selected = deptFilter.selectedOptions[0];
+            if (selected && selected.hidden) {
+                deptFilter.value = '';
+            }
+        }
+
+        orgFilter.addEventListener('change', filterDepartments);
+        window.addEventListener('DOMContentLoaded', filterDepartments);
+    </script>
+}

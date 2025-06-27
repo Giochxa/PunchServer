@@ -1,0 +1,33 @@
+@model PunchServerMVC.Models.ViewModels.DepartmentFormViewModel
+
+@{
+    ViewData["Title"] = "Create Department";
+}
+
+<h2>Create Department</h2>
+
+<form asp-action="Create" method="post">
+    <div class="mb-3">
+        <label asp-for="Department.Name" class="form-label"></label>
+        <input asp-for="Department.Name" class="form-control" />
+        <span asp-validation-for="Department.Name" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Department.Description" class="form-label"></label>
+        <input asp-for="Department.Description" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Department.OrganisationId" class="form-label">Organisation</label>
+        <select asp-for="Department.OrganisationId" class="form-select"
+                asp-items="@(new SelectList(Model.Organisations, "Id", "Name"))">
+            <option value="">-- Select Organisation --</option>
+        </select>
+        <span asp-validation-for="Department.OrganisationId" class="text-danger"></span>
+    </div>
+    <div class="form-check">
+        <input asp-for="Department.IsActive" class="form-check-input" />
+        <label asp-for="Department.IsActive" class="form-check-label"></label>
+    </div>
+    <button type="submit" class="btn btn-success mt-3">Save</button>
+    <a asp-action="Index" class="btn btn-secondary mt-3">Cancel</a>
+</form>

@@ -1,0 +1,56 @@
+@model PunchServerMVC.Models.ScheduleTemplate
+@{
+    ViewData["Title"] = "Edit Template";
+    var allDays = Enum.GetValues(typeof(DayOfWeek)).Cast<DayOfWeek>().ToList();
+}
+
+<h2>Edit Schedule Template</h2>
+
+<form asp-action="Edit" method="post">
+    <input type="hidden" asp-for="Id" />
+    
+    <div class="mb-3">
+        <label asp-for="Name"></label>
+        <input asp-for="Name" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="ShiftStart"></label>
+        <input asp-for="ShiftStart" class="form-control" type="time" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="ShiftEnd"></label>
+        <input asp-for="ShiftEnd" class="form-control" type="time" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Type"></label>
+        <input asp-for="Type" class="form-control" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="BreakMinutes">Break (minutes)</label>
+        <input asp-for="BreakMinutes" class="form-control" type="number" min="0" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Days of the Week</label>
+        <div class="form-check">
+            @foreach (var day in allDays)
+            {
+                <div class="form-check">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           name="Days"
+                           value="@day"
+                           @(Model.Days.Contains(day) ? "checked" : "") />
+                    <label class="form-check-label">@day</label>
+                </div>
+            }
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save Changes</button>
+    <a href="/ScheduleTemplates" class="btn btn-secondary">Cancel</a>
+</form>

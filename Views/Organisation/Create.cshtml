@@ -1,0 +1,33 @@
+@model PunchServerMVC.Models.Organisation
+
+@{
+    ViewData["Title"] = "Create Organisation";
+}
+
+<h2>Create Organisation</h2>
+
+<form asp-action="Create" method="post">
+    <div class="mb-3">
+        <label asp-for="OrganisationNumber" class="form-label"></label>
+        <input asp-for="OrganisationNumber" class="form-control" />
+        <span asp-validation-for="OrganisationNumber" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="Description" class="form-label"></label>
+        <input asp-for="Description" class="form-control" />
+    </div>
+    <div class="mb-3">
+        <label asp-for="LogoUrl" class="form-label"></label>
+        <input asp-for="LogoUrl" class="form-control" />
+    </div>
+    <div class="form-check">
+        <input asp-for="IsActive" class="form-check-input" />
+        <label asp-for="IsActive" class="form-check-label"></label>
+    </div>
+    <button type="submit" class="btn btn-success mt-3">Save</button>
+    <a asp-action="Index" class="btn btn-secondary mt-3">Cancel</a>
+</form>

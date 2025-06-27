@@ -1,0 +1,237 @@
+@model PunchServerMVC.Models.ViewModels.WorkSheetViewModel
+
+@{
+    var days = Enumerable.Range(1, DateTime.DaysInMonth(Model.Year, Model.Month)).ToList();
+    ViewData["Title"] = "სამუშაო დროის აღრიცხვის ფორმა (T-12)";
+}
+
+<style>
+    body {
+        font-family: "Sylfaen", "Arial", sans-serif;
+        margin: 0;
+        padding: 10px;
+        font-size: 11px;
+    }
+    .t12 {
+        border-collapse: collapse;
+        width: 100%;
+        table-layout: fixed;
+        font-size: 8px;
+    }
+    .t12 th,
+    .t12 td {
+        border: 1px solid black;
+        text-align: center;
+        padding: 1px;
+        vertical-align: middle;
+        word-wrap: break-word;
+        height: 20px;
+    }
+    .t12 .col1 { width: 25px; } /* რიგითი N */
+    .t12 .col2 { width: 120px; text-align: left; padding-left: 3px; } /* სახელი */
+    .t12 .col3 { width: 45px; } /* ტაბელის ნომერი */
+    .t12 .day-col { width: 18px; } /* თარიღები */
+    .t12 .summary-col { width: 25px; } /* ჯამური მონაცემები */
+    
+    .form-header {
+        text-align: center;
+        font-weight: bold;
+        font-size: 12px;
+        margin-bottom: 10px;
+        position: relative;
+    }
+    .attachment-num {
+        position: absolute;
+        right: 0;
+        top: 0;
+        font-size: 11px;
+    }
+    
+    .org-info {
+        border: 1px solid black;
+        padding: 5px;
+        margin-bottom: 10px;
+        font-size: 10px;
+    }
+    
+    .period-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        font-size: 10px;
+    }
+    
+    .signatures {
+        width: 100%;
+        margin-top: 20px;
+        font-size: 10px;
+    }
+    .signatures td {
+        border: none;
+        padding: 15px 0;
+        vertical-align: top;
+    }
+</style>
+
+<div class="form-header">
+    სამუშაო დროის აღრიცხვის ფორმა
+    <div class="attachment-num">დანართი N2</div>
+</div>
+
+<div class="org-info">
+    ორგანიზაციის დასახელება: @Model.OrganisationName
+</div>
+
+<div class="period-info">
+    <div>საიდენტიფიკაციო კოდი: @Model.IdentificationCode</div>
+    <div>
+        <span>შედგენის თარიღი: @Model.FormDate.ToString("dd.MM.yyyy")</span>
+        <span style="margin-left: 20px;">საანგარიშო პერიოდი: @Model.PeriodStart.ToString("dd.MM.yyyy") - @Model.PeriodEnd.ToString("dd.MM.yyyy")</span>
+    </div>
+</div>
+
+<table class="t12">
+<thead>
+    <tr>
+        <th colspan="1">რიგითი N</th>
+        <th colspan="1">გვარი, სახელი, თანამდებობა (სპეციალობა, პროფესია)</th>
+        <th colspan="1">ტაბელის ნომერი/ პირადი ნომერი</th>
+        <th colspan="32">აღნიშვნები სამუშაოზე გამოცხადების/არგამოცხადების შესახებ თარიღების მიხედვით თვის განმავლობაში</th>
+        <th colspan="6">სულ ნამუშევარი თვის განმავლობაში</th>
+        <th colspan="4">არგამოცხადების დღეების, საათების რ-ბა</th>
+        <th colspan="1">დასვენების, უქმე დღეების რ-ბა</th>
+    </tr>
+    <tr>
+        <th colspan="3"></th>
+        <th colspan="1">1</th>
+        <th colspan="1">2</th>
+        <th colspan="1">3</th>
+        <th colspan="1">4</th>
+        <th colspan="1">5</th>
+        <th colspan="1">6</th>
+        <th colspan="1">7</th>
+        <th colspan="1">8</th>
+        <th colspan="1">9</th>
+        <th colspan="1">10</th>
+        <th colspan="1">11</th>
+        <th colspan="1">12</th>
+        <th colspan="1">13</th>
+        <th colspan="1">14</th>
+        <th colspan="1">15</th>
+        <th colspan="1">სულ ნამუშევარი სთ.  თვის I ნახევარში</th>
+        <th colspan="1">16</th>
+        <th colspan="1">17</th>
+        <th colspan="1">18</th>
+        <th colspan="1">19</th>
+        <th colspan="1">20</th>
+        <th colspan="1">21</th>
+        <th colspan="1">22</th>
+        <th colspan="1">23</th>
+        <th colspan="1">24</th>
+        <th colspan="1">25</th>
+        <th colspan="1">26</th>
+        <th colspan="1">27</th>
+        <th colspan="1">28</th>
+        <th colspan="1">29</th>
+        <th colspan="1">30</th>
+        <th colspan="1">სულ ნამუშევარი სთ. თვის
+ II მეორე ნახევარში</th>
+        <th colspan="1">დღე</th>
+        <th colspan="5">საათი</th>
+        <th colspan="5">მათ შორის</th>
+    </tr>
+    <tr>
+        <th colspan="36"></th>
+        <th colspan="1">ჯამი</th>
+        <th colspan="4">მათ შორის</th>
+        <th colspan="1">ს/ფ</th>
+        <th colspan="1">შვებულე-ბა</th>
+        <th colspan="1">უხ. შვებუ-ლება</th>
+        <th colspan="2">სხვა</th>
+    </tr>
+    <tr>
+        <th colspan="37"></th>
+        <th colspan="1">ზეგანაკვე-თური</th>
+        <th colspan="1">ღამე</th>
+        <th colspan="1">დასვენების,
+უქმე დღეები</th>
+        <th colspan="6">სხვა</th>
+    </tr>
+    <tr>
+        <th colspan="1">1</th>
+        <th colspan="1">2</th>
+        <th colspan="1">3</th>
+        <th colspan="15">4</th>
+        <th colspan="1">5</th>
+        <th colspan="15">6</th>
+        <th colspan="1">7</th>
+        <th colspan="1">8</th>
+        <th colspan="1">9</th>
+        <th colspan="1">10</th>
+        <th colspan="1">11</th>
+        <th colspan="1">12</th>
+        <th colspan="1">13</th>
+        <th colspan="1">14</th>
+        <th colspan="1">15</th>
+        <th colspan="1">16</th>
+        <th colspan="1">17</th>
+        <th colspan="1">18</th>
+    </tr>
+</thead>
+    
+    <tbody>
+        @{ int index = 1; }
+        @foreach (var emp in Model.EmployeeSheets)
+        {
+            <tr>
+                <td>@index</td>
+                <td class="col2">@emp.FullName</td>
+                <td>@emp.TabNumber</td>
+                
+                @foreach (var entry in emp.DailyEntries)
+                {
+                    <td class="day-col">@entry.Status</td>
+                }
+                
+                <td>@emp.WorkedDaysFirstHalf</td>
+                <td>@emp.WorkedHoursFirstHalf</td>
+                <td>@emp.WorkedDaysSecondHalf</td>
+                <td>@emp.WorkedHoursSecondHalf</td>
+                <td>@emp.TotalWorkedDays</td>
+                <td>@emp.TotalWorkedHours</td>
+                <td>@emp.AbsenceDays</td>
+                <td>@emp.AbsenceHours</td>
+                <td>@emp.WeekendDays</td>
+                <td>@emp.BusinessTripHours</td>
+                <td>@emp.PaidLeaveHours</td>
+                <td>@emp.UnpaidLeaveHours</td>
+                <td>@emp.OtherAbsenceHours</td>
+                <td>@emp.OvertimeHours</td>
+                <td>@emp.NightHours</td>
+                <td>@emp.WeekendWorkedHours</td>
+                <td>@emp.OtherHours</td>
+            </tr>
+            index++;
+        }
+    </tbody>
+</table>
+
+<table class="signatures">
+    <tr>
+        <td style="width: 50%;">
+            პასუხისმგებელი პირი<br/>
+            თანამდებობა _______________<br/>
+            ხელმოწერა _______________
+        </td>
+        <td style="width: 50%; text-align: right;">
+            ორგანიზაციის/სტრუქტურული ერთეულის ხელმძღვანელი<br/>
+            თანამდებობა _______________<br/>
+            ხელმოწერა _______________
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2" style="text-align: right; padding-top: 20px;">
+            «__» ________________ 20__ წ.
+        </td>
+    </tr>
+</table>
