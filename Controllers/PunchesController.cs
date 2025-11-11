@@ -32,48 +32,48 @@ namespace PunchServerMVC.Controllers
             if (request == null)
                 return BadRequest("Request body is missing");
 
-            if (string.IsNullOrWhiteSpace(request.UniqueId))
-                return BadRequest("UniqueId is required");
+            if (string.IsNullOrWhiteSpace(request.PersonalId))
+                return BadRequest("PersonalId is required");
 
-            if (string.IsNullOrWhiteSpace(request.ImageBase64))
-                return BadRequest("ImageBase64 is required");
-
-            var employee = _repo.GetEmployees().FirstOrDefault(e => e.UniqueId == request.UniqueId);
+            var employee = _repo.GetEmployees().FirstOrDefault(e => e.PersonalId == request.PersonalId);
             if (employee == null)
             {
-                _logger.LogWarning("Employee with UniqueId {UniqueId} not found", request.UniqueId);
-                return BadRequest("Invalid UniqueId");
+                _logger.LogWarning("Employee with PersonalId {PersonalId} not found", request.PersonalId);
+                return BadRequest("Invalid PersonalId");
             }
 
-            // Use consistent timestamp for both punch and image file
             var timestamp = request.PunchTime == DateTime.MinValue
                 ? DateTime.UtcNow.ToLocalTime()
                 : request.PunchTime.ToLocalTime();
 
-            string fileName;
-            try
+            string? fileName = null;
+            if (!string.IsNullOrWhiteSpace(request.ImageBase64))
             {
-                var base64 = request.ImageBase64.Contains(',')
-                    ? request.ImageBase64.Split(',').Last()
-                    : request.ImageBase64;
+                try
+                {
+                    var base64 = request.ImageBase64.Contains(',')
+                        ? request.ImageBase64.Split(',').Last()
+                        : request.ImageBase64;
 
-                var bytes = Convert.FromBase64String(base64);
+                    var bytes = Convert.FromBase64String(base64);
 
-                fileName = $"{employee.Id}_{timestamp:yyyyMMdd_HHmmss}.jpg";
-                var imageFolder = Path.Combine(_env.WebRootPath, "punch_images");
-                Directory.CreateDirectory(imageFolder);
-                var filePath = Path.Combine(imageFolder, fileName);
+                    fileName = $"{employee.Id}_{timestamp:yyyyMMdd_HHmmss}.jpg";
+                    var imageFolder = Path.Combine(_env.WebRootPath, "punch_images");
+                    Directory.CreateDirectory(imageFolder);
+                    var filePath = Path.Combine(imageFolder, fileName);
 
-                System.IO.File.WriteAllBytes(filePath, bytes);
-                _logger.LogInformation("Saved punch image to: {FilePath}", filePath);
+                    System.IO.File.WriteAllBytes(filePath, bytes);
+                    _logger.LogInformation("Saved punch image to: {FilePath}", filePath);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to decode or save punch image.");
+                    // Do not fail sync if image fails; continue without it
+                    fileName = null;
+                }
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to save punch image.");
-                return BadRequest("Invalid Base64 image data or file write error.");
-            }
 
-            // 🔍 Determine punch type from schedule
+            // 🔍 Determine punch type
             var schedule = _repo.GetSchedules()
                 .FirstOrDefault(s =>
                     s.EmployeeId == employee.Id &&
@@ -102,10 +102,15 @@ namespace PunchServerMVC.Controllers
 
             _repo.AddPunch(punch);
 
-            _logger.LogInformation("Punch saved for EmployeeId {EmployeeId} at {Timestamp} as {PunchType}",
+            _logger.LogInformation("✅ Punch saved for EmployeeId {EmployeeId} at {Timestamp} as {PunchType}",
                 employee.Id, timestamp, punchType);
 
-            return Ok(new { message = "Punch recorded successfully", timestamp, punchType });
+            return Ok(new
+            {
+                message = "Punch recorded successfully",
+                timestamp,
+                punchType
+            });
         }
     }
 }
