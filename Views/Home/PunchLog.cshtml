@@ -18,14 +18,16 @@
         </tr>
     </thead>
     <tbody>
+
     @foreach (var punch in Model)
     {
         <tr>
-            <td>@punch.Timestamp.ToLocalTime()</td>
+            <td>@punch.Timestamp.ToLocalTime().ToString(format: "dd/MM/yyyy HH:mm:ss")</td> 
             <td>@punch.PunchType</td>
             <td>@punch.EmployeeId</td>
             <td>@(punch.Employee?.FullName ?? "Unknown")</td>
-            <td>@punch.CreatedAt.ToLocalTime()</td>
+            <td>@punch.CreatedAt.AddHours(value: 4).ToString(format: "dd/MM/yyyy HH:mm:ss")</td>
+
             <td>
                 <img src="/punch_images/@punch.ImageUrl" 
                      alt="Punch Image" 
