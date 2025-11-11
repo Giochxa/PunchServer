@@ -3,8 +3,8 @@ using System.Text.Json.Serialization;
 
 public class PunchRequest
 {
-    [JsonPropertyName("employeeId")]
-    public string? UniqueId { get; set; }
+    [JsonPropertyName("personalId")]
+    public string? PersonalId { get; set; }
 
     [JsonPropertyName("photoData")]
     public string? ImageBase64 { get; set; }
