@@ -50,6 +50,9 @@
                             <a class="nav-link text-dark" asp-controller="Department" asp-action="Index">Departments</a>
                         </li>
                         <li class="nav-item">
+                             <a class="nav-link text-dark" asp-controller="Reports" asp-action="MonthlyPunchReport">Report</a>
+                        </li>
+                        <li class="nav-item">
                              <a class="nav-link text-dark" asp-controller="Home" asp-action="WorkSheet" asp-route-year="@DateTime.Now.Year" asp-route-month="@DateTime.Now.Month">Work Sheet</a>
                         </li>
                     </ul>
