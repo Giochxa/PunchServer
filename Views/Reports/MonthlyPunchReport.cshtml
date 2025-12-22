@@ -3,10 +3,10 @@
     ViewData["Title"] = "Monthly Punch Report";
 }
 
-
 <h2>Monthly Punch Report</h2>
 
 <form method="get">
+
     <select name="organisationId">
         <option value="">Organisation</option>
         @foreach (var o in Model.Organisations)
@@ -39,6 +39,15 @@
 
     <input type="number" name="year" value="@Model.Year" min="2020" max="2050" />
     <input type="number" name="month" value="@Model.Month" min="1" max="12" />
+
+    <!-- ✅ NEW: SINGLE DAY FILTER -->
+    <input type="number" name="day"
+           placeholder="Day"
+           min="1"
+           max="@DateTime.DaysInMonth(Model.Year, Model.Month)"
+           value="@(Model.Day ?? null)"
+           style="width:80px;" />
+
     <button type="submit">Filter</button>
 </form>
 
@@ -46,56 +55,59 @@
 
 @if (Model.Rows.Any())
 {
-    var days = DateTime.DaysInMonth(Model.Year, Model.Month);
+    int daysInMonth = DateTime.DaysInMonth(Model.Year, Model.Month);
+
+    // Actual day range after filter
+    int startDay = Model.Day ?? 1;
+    int endDay = Model.Day ?? daysInMonth;
 
     <table class="table table-bordered table-striped table-sm">
-    <thead>
-        <tr>
-            <th rowspan="2">Organisation</th>
-            <th rowspan="2">Department</th>
-            <th rowspan="2">Employee</th>
-            <th rowspan="2">PID</th>
-
-            @for (int d = 1; d <= DateTime.DaysInMonth(Model.Year, Model.Month); d++)
-            {
-                <th colspan="3" class="text-center">@d</th>
-            }
-        </tr>
-
-        <tr>
-            @for (int d = 1; d <= DateTime.DaysInMonth(Model.Year, Model.Month); d++)
-            {
-                <th>In</th>
-                <th>Out</th>
-                <th>Diff</th>
-            }
-        </tr>
-    </thead>
-
-    <tbody>
-        @foreach (var row in Model.Rows)
-        {
+        <thead>
             <tr>
-                <td>@row.OrganisationName</td>
-                <td>@row.DepartmentName</td>
-                <td>@row.EmployeeName</td>
-                <td>@row.PersonalId</td>
+                @* <th rowspan="2">Organisation</th> *@
+                <th rowspan="2">Department</th>
+                <th rowspan="2">Employee</th>
+                <th rowspan="2">Personal ID</th>
 
-                @foreach (var day in row.Days)
+                @for (int d = startDay; d <= endDay; d++)
                 {
-                    <td>
-                        @day.PunchIn?.ToString("dd.MM.yyyy HH:mm:ss") 
-                    </td>
-                    <td>
-                        @day.PunchOut?.ToString("dd.MM.yyyy HH:mm:ss")
-                    </td>
-                    <td>
-                        @(day.DifferenceHours?.ToString("0.##"))
-                    </td>
+                    <th colspan="3" class="text-center">@d</th>
                 }
             </tr>
-        }
-    </tbody>
-</table>
 
+            <tr>
+                @for (int d = startDay; d <= endDay; d++)
+                {
+                    <th>In</th>
+                    <th>Out</th>
+                    <th>Difference</th>
+                }
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var row in Model.Rows)
+            {
+                <tr>
+                    @* <td>@row.OrganisationName</td> *@
+                    <td>@row.DepartmentName</td>
+                    <td>@row.EmployeeName</td>
+                    <td>@row.PersonalId</td>
+
+                    @{
+    var daysList = (Model.Day.HasValue)
+        ? row.Days  // already only 1 day
+        : row.Days.Skip(startDay - 1).Take(endDay - startDay + 1);
+}
+
+@foreach (var day in daysList)
+{
+                        <td>@day.PunchIn?.ToString("dd.MM.yyyy HH:mm:ss")</td>
+                        <td>@day.PunchOut?.ToString("dd.MM.yyyy HH:mm:ss")</td>
+                        <td>@(day.DifferenceHours?.ToString("0.##"))</td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
 }
