@@ -11,6 +11,8 @@ namespace PunchServerMVC.Models.ViewModels
         public int? EmployeeId { get; set; }
         public int Year { get; set; }
         public int Month { get; set; }
+        public int? Day { get; set; }
+
 
         public List<Organisation> Organisations { get; set; } = new();
         public List<Department> Departments { get; set; } = new();
