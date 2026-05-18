@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 @model PunchServerMVC.Models.ViewModels.MonthlyPunchReportViewModel
 @{
     ViewData["Title"] = "Monthly Punch Report";
@@ -111,3 +112,726 @@
         </tbody>
     </table>
 }
+=======
+@model PunchServerMVC.Models.ViewModels.MonthlyPunchReportViewModel
+@using System.Linq
+@using System.Collections.Generic
+@using System.Globalization
+
+@{
+    ViewData["Title"] = "Report";
+    bool hasRows = Model?.Rows?.Any() == true;
+    bool singleDay = Model?.Day.HasValue == true;
+    int daysInMonth = DateTime.DaysInMonth(Model.Year, Model.Month);
+    var dayNumbers = hasRows
+        ? (singleDay ? new List<int> { Model.Day!.Value } : Enumerable.Range(1, daysInMonth).ToList())
+        : new List<int>();
+    var activeTab = (Model.ActiveTab ?? "monthly").ToLowerInvariant();
+    const int worksheetMinHeight = 1800;
+    var salaryExportFileName = $"SalaryExport_{Model.Year}-{Model.Month:D2}.xlsx";
+}
+
+<h2 class="text-center">Report</h2>
+
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item"><a class="nav-link @(activeTab == "monthly" ? "active" : "")" asp-action="MonthlyPunchReport" asp-route-activeTab="monthly">Monthly Punch Report</a></li>
+    <li class="nav-item"><a class="nav-link @(activeTab == "worksheet" ? "active" : "")" asp-action="MonthlyPunchReport" asp-route-activeTab="worksheet">Work Sheet</a></li>
+    <li class="nav-item"><a class="nav-link @(activeTab == "vacations" ? "active" : "")" asp-action="MonthlyPunchReport" asp-route-activeTab="vacations">Vacations</a></li>
+    <li class="nav-item"><a class="nav-link @(activeTab == "late" ? "active" : "")" asp-action="MonthlyPunchReport" asp-route-activeTab="late">Late In / Early Out</a></li>
+    <li class="nav-item"><a class="nav-link @(activeTab == "salary" ? "active" : "")" asp-action="MonthlyPunchReport" asp-route-activeTab="salary">Salary Export</a></li>
+</ul>
+
+@if (activeTab == "worksheet")
+{
+    var worksheetYear = Model.Year > 0 ? Model.Year : DateTime.Now.Year;
+    var worksheetMonth = Model.Month > 0 ? Model.Month : DateTime.Now.Month;
+    <iframe id="worksheetFrame"
+            src="@Url.Action("WorkSheet", "Home", new { organisationId = Model.OrganisationId, departmentId = Model.DepartmentId, year = worksheetYear, month = worksheetMonth, embedded = true })"
+            style="width:100%;height:@(worksheetMinHeight)px;border:0;"
+            scrolling="auto"></iframe>
+}
+else if (activeTab == "vacations")
+{
+    <form method="get" class="row g-2 mb-3">
+        <input type="hidden" name="activeTab" value="vacations" />
+
+        <div class="col-md-3">
+            <label class="form-label">Department</label>
+            <select name="departmentId" class="form-select">
+                <option value="">Department</option>
+                @foreach (var d in Model.Departments)
+                {
+                    <option value="@d.Id" selected="@(Model.DepartmentId == d.Id ? "selected" : null)">@d.Name</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Employee</label>
+            <select id="employeeIdVacationReport" name="employeeId" class="form-select">
+                <option value="">Employee</option>
+                @foreach (var e in Model.Employees)
+                {
+                    <option value="@e.Id" selected="@(Model.EmployeeId == e.Id ? "selected" : null)">@e.FullName</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">From</label>
+            <input type="date" name="vacationFrom" value="@Model.VacationFrom.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">To</label>
+            <input type="date" name="vacationTo" value="@Model.VacationTo.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">Filter</button>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <a asp-action="MonthlyPunchReport" asp-route-activeTab="vacations" class="btn btn-outline-secondary w-100">Reset</a>
+        </div>
+    </form>
+
+    <table class="table table-bordered table-sm">
+        <thead>
+            <tr>
+                <th>Department</th>
+                <th>Employee</th>
+                <th>Vacations Per Year</th>
+                <th>Used Vacations</th>
+                <th>Remaining Vacations</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var row in Model.VacationRows)
+        {
+            <tr>
+                <td>@row.DepartmentName</td>
+                <td>@row.EmployeeName</td>
+                <td>@row.AnnualVacationLimit</td>
+                <td>@row.UsedVacationDays</td>
+                <td>@row.RemainingVacationDays</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+else if (activeTab == "late")
+{
+    <form method="get" class="row g-2 mb-3">
+        <input type="hidden" name="activeTab" value="late" />
+
+        <div class="col-md-3">
+            <label class="form-label">Department</label>
+            <select name="departmentId" class="form-select">
+                <option value="">Department</option>
+                @foreach (var d in Model.Departments)
+                {
+                    <option value="@d.Id" selected="@(Model.DepartmentId == d.Id ? "selected" : null)">@d.Name</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Employee</label>
+            <select id="employeeIdLateReport" name="employeeId" class="form-select">
+                <option value="">Employee</option>
+                @foreach (var e in Model.Employees)
+                {
+                    <option value="@e.Id" selected="@(Model.EmployeeId == e.Id ? "selected" : null)">@e.FullName</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">From</label>
+            <input type="date" name="lateFrom" value="@Model.LateFrom.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">To</label>
+            <input type="date" name="lateTo" value="@Model.LateTo.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Late In Minutes</label>
+            <input type="number" min="0" name="lateInMinutes" value="@(Model.LateInMinutes?.ToString() ?? "")" placeholder="More than..." class="form-control" />
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Early Out Minutes</label>
+            <input type="number" min="0" name="earlyOutMinutes" value="@(Model.EarlyOutMinutes?.ToString() ?? "")" placeholder="More than..." class="form-control" />
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Overtime Minutes</label>
+            <input type="number" min="0" name="overtimeMinutes" value="@(Model.OvertimeMinutes?.ToString() ?? "")" placeholder="More than..." class="form-control" />
+        </div>
+
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">Filter</button>
+        </div>
+
+        <div class="col-md-2 d-flex align-items-end">
+            <a asp-action="MonthlyPunchReport" asp-route-activeTab="late" class="btn btn-outline-secondary w-100">Reset</a>
+        </div>
+    </form>
+
+    @if (Model.LateInMinutes.HasValue || Model.EarlyOutMinutes.HasValue || Model.OvertimeMinutes.HasValue)
+    {
+        <table class="table table-bordered table-sm">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Department</th>
+                    <th>Employee</th>
+                    <th>Schedule</th>
+                    <th>In</th>
+                    <th>Out</th>
+                    <th>Late In</th>
+                    <th>Early Out</th>
+                    <th>Overtime</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var row in Model.LateRows)
+            {
+                <tr>
+                    <td>@row.WorkDate.ToString("dd.MM.yyyy")</td>
+                    <td>@row.DepartmentName</td>
+                    <td>@row.EmployeeName</td>
+                    <td>@row.ScheduleText</td>
+                    <td>@(row.PunchIn?.ToString("dd.MM.yyyy HH:mm") ?? "-")</td>
+                    <td>@(row.PunchOut?.ToString("dd.MM.yyyy HH:mm") ?? "-")</td>
+                    <td>@row.LateInMinutes</td>
+                    <td>@row.EarlyOutMinutes</td>
+                    <td>@row.OvertimeMinutes</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+}
+else if (activeTab == "salary")
+{
+    var salaryMonthValue = $"{Model.Year:D4}-{Model.Month:D2}";
+    var hasSalaryRows = Model.SalaryRows?.Any() == true;
+
+    <form method="get" class="row g-2 mb-3">
+        <input type="hidden" name="activeTab" value="salary" />
+
+        <div class="col-md-2">
+            <label class="form-label">Organisation</label>
+            <select name="organisationId" class="form-select">
+                <option value="">Organisation</option>
+                @foreach (var o in Model.Organisations)
+                {
+                    <option value="@o.Id" selected="@(Model.OrganisationId == o.Id ? "selected" : null)">@o.Name</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Department</label>
+            <select name="departmentId" class="form-select">
+                <option value="">Department</option>
+                @foreach (var d in Model.Departments)
+                {
+                    <option value="@d.Id" selected="@(Model.DepartmentId == d.Id ? "selected" : null)">@d.Name</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Employee</label>
+            <select id="employeeIdSalaryReport" name="employeeId" class="form-select">
+                <option value="">Employee</option>
+                @foreach (var e in Model.Employees)
+                {
+                    <option value="@e.Id" selected="@(Model.EmployeeId == e.Id ? "selected" : null)">@e.FullName (@e.PersonalId)</option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label">Month</label>
+            <input type="month" name="salaryMonthValue" value="@salaryMonthValue" class="form-control" />
+        </div>
+
+        <div class="col-md-auto d-flex align-items-end">
+            <button type="submit" class="btn btn-primary text-nowrap">Apply</button>
+        </div>
+
+        <div class="col-md-auto d-flex align-items-end">
+            <a asp-action="MonthlyPunchReport" asp-route-activeTab="salary" class="btn btn-outline-secondary text-nowrap">Reset</a>
+        </div>
+
+        <div class="col-md-auto d-flex align-items-end">
+            <button type="button" id="salaryExportBtn" class="btn btn-success text-nowrap" @(hasSalaryRows ? "" : "disabled")>Export Excel</button>
+        </div>
+    </form>
+
+    @if (hasSalaryRows)
+    {
+        <div class="salary-export-scroll">
+            <table id="salaryExportTable" class="table table-bordered table-sm align-middle">
+                <thead>
+                    <tr>
+                        <th>პერიოდი</th>
+                        <th>თანამშრომელი</th>
+                        <th>მომხმარებელი</th>
+                        <th>თანამშრომელთა სამუშაო გრაფიკები</th>
+                        <th>შეცვლის ბრძანების ტიპი</th>
+                        <th>ზეგანაკვეთი</th>
+                        <th>დაგვიანება</th>
+                        <th>თანამშრომელთა სამუშაო გრაფიკები</th>
+                        <th>შვებულება</th>
+                        <th>გაცდენა</th>
+                        <th>სამუშაო გრაფიკის მნიშვნელობა</th>
+                        <th>ბიულეტინი</th>
+                        <th>ნამუშევარი საათები</th>
+                        <th>მუშაობა სთ</th>
+                        <th>დასვენება სთ</th>
+                        <th>კალენდრის დასაწყისი</th>
+                        <th>საათი კალენდრით</th>
+                        <th>დამატებული თანამშრომელთა სამუშაო გრაფიკები</th>
+                        <th>გრაფიკი დოკუმენტიდან</th>
+                        <th>ნაწილი1</th>
+                        <th>ნაწილი2</th>
+                        <th>ნაწილი3</th>
+                        <th>კალენდრის დასასრული</th>
+                        <th>აქტიურია</th>
+                        <th>განთავისუფლება</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var row in Model.SalaryRows)
+                {
+                    <tr>
+                        <td>@row.PeriodDate.ToString("dd.MM.yyyy")</td>
+                        <td>@row.EmployeeName</td>
+                        <td>@row.User</td>
+                        <td>@row.ScheduleName</td>
+                        <td>@row.ChangeCommandType</td>
+                        <td>@(row.OvertimeHours?.ToString("0.##", CultureInfo.InvariantCulture) ?? "")</td>
+                        <td>@(row.LateHours?.ToString("0.##", CultureInfo.InvariantCulture) ?? "")</td>
+                        <td>@row.EmployeeWorkSchedule2</td>
+                        <td>@row.VacationValue</td>
+                        <td>@row.AbsenceValue</td>
+                        <td>@row.WorkScheduleValue</td>
+                        <td>@row.SickLeaveValue</td>
+                        <td>@(row.ScheduledHours?.ToString("0.##", CultureInfo.InvariantCulture) ?? "")</td>
+                        <td>@(row.WorkHours?.ToString("0.##", CultureInfo.InvariantCulture) ?? "")</td>
+                        <td>@(row.BreakHours?.ToString("0.##", CultureInfo.InvariantCulture) ?? "")</td>
+                        <td>@(row.CalendarStart?.ToString("dd.MM.yyyy HH:mm:ss") ?? "")</td>
+                        <td>@(row.CalendarHours?.ToString("0.##", CultureInfo.InvariantCulture) ?? "")</td>
+                        <td>@row.AddedEmployeeWorkSchedule</td>
+                        <td>@row.ScheduleFromDocument</td>
+                        <td>@row.Part1</td>
+                        <td>@row.Part2</td>
+                        <td>@row.Part3</td>
+                        <td>@(row.CalendarEnd?.ToString("dd.MM.yyyy HH:mm:ss") ?? "")</td>
+                        <td>@row.Active</td>
+                        <td>@row.Release</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">No data for selected filters.</div>
+    }
+}
+else
+{
+    <form method="get" class="mb-3">
+        <input type="hidden" name="activeTab" value="monthly" />
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+            <select name="organisationId" class="form-control" style="width:180px">
+                <option value="">Organisation</option>
+                @foreach (var o in Model.Organisations)
+                {
+                    <option value="@o.Id" selected="@(Model.OrganisationId == o.Id ? "selected" : null)">@o.Name</option>
+                }
+            </select>
+
+            <select name="departmentId" class="form-control" style="width:180px">
+                <option value="">Department</option>
+                @foreach (var d in Model.Departments)
+                {
+                    <option value="@d.Id" selected="@(Model.DepartmentId == d.Id ? "selected" : null)">@d.Name</option>
+                }
+            </select>
+
+            <select id="employeeIdReport" name="employeeId" class="form-control" style="width:240px">
+                <option value="">Employee</option>
+                @foreach (var e in Model.Employees)
+                {
+                    <option value="@e.Id" selected="@(Model.EmployeeId == e.Id ? "selected" : null)">@e.FullName (@e.PersonalId)</option>
+                }
+            </select>
+
+            <input type="number" name="year" value="@Model.Year" class="form-control" style="width:90px" />
+            <input type="number" name="month" value="@Model.Month" class="form-control" style="width:70px" />
+            <input type="number" name="day" value="@(Model.Day.HasValue ? Model.Day.Value.ToString() : "")" placeholder="Day" class="form-control" style="width:70px" />
+            <input type="number" step="0.01" name="minDifferenceHours" value="@(Model.MinDifferenceHours?.ToString(CultureInfo.InvariantCulture) ?? "")" placeholder="Difference >" class="form-control" style="width:120px" />
+            <button type="submit" class="btn btn-primary">Filter</button>
+
+            @if (hasRows)
+            {
+                <button type="button" id="exportBtn" class="btn btn-success">Export to Excel</button>
+            }
+        </div>
+    </form>
+
+    <hr />
+
+    @if (hasRows)
+    {
+        <table id="reportTable" class="table table-bordered table-sm text-center align-middle">
+            <thead>
+                <tr>
+                    <th rowspan="2">Department</th>
+                    <th rowspan="2">Employee</th>
+                    <th rowspan="2">Personal ID</th>
+                    @foreach (var d in dayNumbers)
+                    {
+                        <th colspan="3">@d</th>
+                    }
+                </tr>
+                <tr>
+                    @foreach (var d in dayNumbers)
+                    {
+                        <th>In</th>
+                        <th>Out</th>
+                        <th>Difference</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var row in Model.Rows)
+                {
+                    <tr>
+                        <td>@row.DepartmentName</td>
+                        <td>@row.EmployeeName</td>
+                        <td>@row.PersonalId</td>
+                        @foreach (var d in dayNumbers)
+                        {
+                            var day = row.Days.FirstOrDefault(x => (x.PunchIn?.Day ?? x.PunchOut?.Day) == d);
+                            <td>
+                                @if (day?.PunchIn != null)
+                                {
+                                    var iso = day.PunchIn.Value.ToString("yyyy-MM-ddTHH:mm:ss");
+                                    <span class="js-local-dt" data-iso="@iso" style="visibility:hidden;"></span>
+                                }
+                                else
+                                {
+                                    <span>-</span>
+                                }
+                            </td>
+                            <td>
+                                @if (day?.PunchOut != null)
+                                {
+                                    var iso = day.PunchOut.Value.ToString("yyyy-MM-ddTHH:mm:ss");
+                                    <span class="js-local-dt" data-iso="@iso" style="visibility:hidden;"></span>
+                                }
+                                else
+                                {
+                                    <span>-</span>
+                                }
+                            </td>
+                            <td>@(day?.DifferenceHours?.ToString("0.##") ?? "-")</td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div class="alert alert-info">No data for selected filters.</div>
+    }
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+
+<style>
+    .select2-container .select2-results__options { max-height: 400px !important; }
+    .select2-container--default .select2-results__option { padding: 8px 12px; }
+    .select2-container .select2-selection--single { height: calc(1.5em + .75rem + 2px) !important; border: 1px solid #ced4da; border-radius: .375rem; }
+    .select2-container--default .select2-selection--single .select2-selection__rendered { line-height: calc(1.5em + .75rem) !important; padding-left: .75rem; padding-right: 2rem; }
+    .select2-container--default .select2-selection--single .select2-selection__arrow { height: calc(1.5em + .75rem + 2px) !important; right: .5rem; }
+    .salary-export-scroll {
+        max-height: calc(100vh - 260px);
+        overflow: auto;
+        border: 1px solid #dee2e6;
+    }
+    .salary-export-scroll table {
+        margin-bottom: 0;
+        min-width: 3000px;
+    }
+</style>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    @if ((hasRows && activeTab == "monthly") || (activeTab == "salary" && Model.SalaryRows?.Any() == true))
+    {
+        <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    }
+    <script>
+        $(function () {
+            $('#employeeIdReport, #employeeIdVacationReport, #employeeIdLateReport, #employeeIdSalaryReport').select2({
+                width: 'resolve',
+                placeholder: 'Employee',
+                allowClear: true,
+                minimumResultsForSearch: 0
+            });
+        });
+    </script>
+    @if (hasRows && activeTab == "monthly")
+    {
+        <script>
+            (function () {
+                document.querySelectorAll('.js-local-dt').forEach(function (element) {
+                    const iso = element.getAttribute('data-iso');
+                    if (!iso) return;
+
+                    const date = new Date(iso);
+                    if (isNaN(date.getTime())) return;
+
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const year = date.getFullYear();
+                    const hours = String(date.getHours()).padStart(2, '0');
+                    const minutes = String(date.getMinutes()).padStart(2, '0');
+
+                    element.textContent = `${day}.${month}.${year} ${hours}:${minutes}`;
+                    element.style.visibility = 'visible';
+                });
+
+                const exportButton = document.getElementById('exportBtn');
+                if (!exportButton || typeof XLSX === 'undefined') return;
+
+                function parseIsoAsLocalToExcelSerial(iso) {
+                    if (!iso) return null;
+
+                    const parts = iso.split(/[-T:]/);
+                    const y = parseInt(parts[0], 10);
+                    const mo = parseInt(parts[1], 10) - 1;
+                    const d = parseInt(parts[2], 10);
+                    const h = parseInt(parts[3] || "0", 10);
+                    const mi = parseInt(parts[4] || "0", 10);
+                    const s = parseInt(parts[5] || "0", 10);
+
+                    const utcMs = Date.UTC(y, mo, d, h, mi, s);
+                    if (isNaN(utcMs)) return null;
+
+                    return (utcMs / 86400000) + 25569;
+                }
+
+                function getExcelLocalDateTimeFormat() {
+                    const dtf = new Intl.DateTimeFormat(undefined, {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit'
+                    });
+                    const parts = dtf.formatToParts(new Date(2026, 1, 2));
+                    const literals = parts.filter(function (p) { return p.type === 'literal'; }).map(function (p) { return p.value; });
+                    const sep = (literals.find(function (x) { return /[.\\-\\/]/.test(x); }) || "/").trim() || "/";
+
+                    const tokens = [];
+                    parts.forEach(function (p) {
+                        if (p.type === "day") tokens.push("dd");
+                        if (p.type === "month") tokens.push("mm");
+                        if (p.type === "year") tokens.push("yyyy");
+                    });
+
+                    return tokens.join(sep) + " hh:mm";
+                }
+
+                exportButton.addEventListener('click', function () {
+                    if (typeof XLSX === "undefined") {
+                        alert("Excel export library not loaded.");
+                        return;
+                    }
+
+                    const rows = [];
+                    const merges = [];
+                    const headerRow1 = ['Department', 'Employee', 'Personal ID'];
+                    const headerRow2 = ['', '', ''];
+
+                    @foreach (var d in dayNumbers)
+                    {
+                        <text>
+                    headerRow1.push(@d, '', '');
+                    headerRow2.push('In', 'Out', 'Difference');
+                    </text>
+                    }
+
+                    rows.push(headerRow1);
+                    rows.push(headerRow2);
+
+                    for (let dayIndex = 0; dayIndex < @dayNumbers.Count; dayIndex++) {
+                        const startColumn = 3 + (dayIndex * 3);
+                        merges.push({
+                            s: { r: 0, c: startColumn },
+                            e: { r: 0, c: startColumn + 2 }
+                        });
+                    }
+
+                    @foreach (var row in Model.Rows)
+                    {
+                        <text>
+                    rows.push([
+                        @Html.Raw(System.Text.Json.JsonSerializer.Serialize(row.DepartmentName)),
+                        @Html.Raw(System.Text.Json.JsonSerializer.Serialize(row.EmployeeName)),
+                        @Html.Raw(System.Text.Json.JsonSerializer.Serialize(row.PersonalId)),
+                        </text>
+                        @for (var i = 0; i < dayNumbers.Count; i++)
+                        {
+                            var dayNumber = dayNumbers[i];
+                            var day = row.Days.FirstOrDefault(x => (x.PunchIn?.Day ?? x.PunchOut?.Day) == dayNumber);
+                            var punchInIso = day?.PunchIn?.ToString("yyyy-MM-ddTHH:mm:ss");
+                            var punchOutIso = day?.PunchOut?.ToString("yyyy-MM-ddTHH:mm:ss");
+                            var differenceText = day?.DifferenceHours?.ToString("0.##") ?? "";
+                            <text>
+                        @Html.Raw(string.IsNullOrWhiteSpace(punchInIso) ? "''" : $"parseIsoAsLocalToExcelSerial('{punchInIso}')"),
+                        @Html.Raw(string.IsNullOrWhiteSpace(punchOutIso) ? "''" : $"parseIsoAsLocalToExcelSerial('{punchOutIso}')"),
+                        @Html.Raw(System.Text.Json.JsonSerializer.Serialize(differenceText))@(i == dayNumbers.Count - 1 ? "" : ",")
+                            </text>
+                        }
+                        <text>
+                    ]);
+                        </text>
+                    }
+
+                    const worksheet = XLSX.utils.aoa_to_sheet(rows);
+                    worksheet['!merges'] = merges;
+
+                    const range = XLSX.utils.decode_range(worksheet['!ref']);
+                    for (let rowIndex = 2; rowIndex <= range.e.r; rowIndex++) {
+                        const personalIdAddress = XLSX.utils.encode_cell({ r: rowIndex, c: 2 });
+                        if (worksheet[personalIdAddress]) {
+                            worksheet[personalIdAddress].t = 's';
+                        }
+
+                        for (let columnIndex = 3; columnIndex <= range.e.c; columnIndex += 3) {
+                            const inAddress = XLSX.utils.encode_cell({ r: rowIndex, c: columnIndex });
+                            const outAddress = XLSX.utils.encode_cell({ r: rowIndex, c: columnIndex + 1 });
+                            const excelDateTimeFmt = getExcelLocalDateTimeFormat();
+
+                            if (worksheet[inAddress] && typeof worksheet[inAddress].v === "number") {
+                                worksheet[inAddress].t = 'n';
+                                worksheet[inAddress].z = excelDateTimeFmt;
+                            }
+
+                            if (worksheet[outAddress] && typeof worksheet[outAddress].v === "number") {
+                                worksheet[outAddress].t = 'n';
+                                worksheet[outAddress].z = excelDateTimeFmt;
+                            }
+
+                            const diffAddress = XLSX.utils.encode_cell({ r: rowIndex, c: columnIndex + 2 });
+                            if (worksheet[diffAddress]) {
+                                const diffValue = worksheet[diffAddress].v;
+                                if (diffValue !== '' && diffValue !== null && diffValue !== undefined && !isNaN(Number(diffValue))) {
+                                    worksheet[diffAddress].v = Number(diffValue);
+                                    worksheet[diffAddress].t = 'n';
+                                    worksheet[diffAddress].z = '0.##';
+                                } else {
+                                    worksheet[diffAddress].t = 's';
+                                }
+                            }
+                        }
+                    }
+
+                    worksheet['!cols'] = [
+                        { wch: 16 },
+                        { wch: 22 },
+                        { wch: 14 },
+                        ...Array.from({ length: @dayNumbers.Count }, function () {
+                            return [{ wch: 19 }, { wch: 19 }, { wch: 12 }];
+                        }).flat()
+                    ];
+
+                    const workbook = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(workbook, worksheet, 'MonthlyReport');
+                    const year = '@Model.Year';
+                    const month = String('@Model.Month').padStart(2, '0');
+                    XLSX.writeFile(workbook, `MonthlyPunchReport_${year}-${month}.xlsx`);
+                });
+            })();
+        </script>
+    }
+    @if (activeTab == "salary" && Model.SalaryRows?.Any() == true)
+    {
+        <script>
+            (function () {
+                const exportButton = document.getElementById('salaryExportBtn');
+                const table = document.getElementById('salaryExportTable');
+                if (!exportButton || !table || typeof XLSX === 'undefined') return;
+
+                exportButton.addEventListener('click', function () {
+                    const worksheet = XLSX.utils.table_to_sheet(table, { raw: true });
+                    const range = XLSX.utils.decode_range(worksheet['!ref']);
+
+                    for (let r = range.s.r + 1; r <= range.e.r; r++) {
+                        for (let c = range.s.c; c <= range.e.c; c++) {
+                            const address = XLSX.utils.encode_cell({ r, c });
+                            const cell = worksheet[address];
+                            if (!cell || cell.v === null || cell.v === undefined || cell.v === '') continue;
+
+                            if ([5, 6, 12, 13, 14, 16, 23].includes(c) && !isNaN(Number(cell.v))) {
+                                cell.v = Number(cell.v);
+                                cell.t = 'n';
+                                if (c === 23) {
+                                    cell.z = '0';
+                                } else {
+                                    delete cell.z;
+                                }
+                            } else {
+                                cell.t = 's';
+                            }
+                        }
+                    }
+
+                    worksheet['!cols'] = [
+                        { wch: 12 }, { wch: 28 }, { wch: 14 }, { wch: 24 }, { wch: 20 },
+                        { wch: 12 }, { wch: 12 }, { wch: 24 }, { wch: 16 }, { wch: 16 },
+                        { wch: 24 }, { wch: 16 }, { wch: 16 }, { wch: 14 }, { wch: 14 },
+                        { wch: 22 }, { wch: 16 }, { wch: 30 }, { wch: 22 }, { wch: 18 },
+                        { wch: 18 }, { wch: 18 }, { wch: 22 }, { wch: 10 }, { wch: 16 }
+                    ];
+
+                    const workbook = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(workbook, worksheet, 'SalaryExport');
+                    XLSX.writeFile(workbook, @Html.Raw(System.Text.Json.JsonSerializer.Serialize(salaryExportFileName)));
+                });
+            })();
+        </script>
+    }
+    @if (activeTab == "worksheet")
+    {
+        <script>
+            (function () {
+                const frame = document.getElementById('worksheetFrame');
+                if (!frame) return;
+
+                frame.addEventListener('load', function () {
+                    frame.style.height = '@(worksheetMinHeight)px';
+                });
+
+                window.addEventListener('message', function (event) {
+                    if (!event.data || event.data.type !== 'worksheetHeight') return;
+                    const nextHeight = Number(event.data.height) || @(worksheetMinHeight);
+                    frame.style.height = Math.max(nextHeight, @(worksheetMinHeight)) + 'px';
+                });
+            })();
+        </script>
+    }
+}
+>>>>>>> master

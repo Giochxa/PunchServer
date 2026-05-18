@@ -1,0 +1,149 @@
+@model PunchServerMVC.Models.ViewModels.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard";
+    var selectedMonth = new DateTime(Model.Year, Model.Month, 1);
+    var previousMonth = selectedMonth.AddMonths(-1);
+    var nextMonth = selectedMonth.AddMonths(1);
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">Dashboard</h2>
+        <div class="text-muted">Today: @Model.Today.ToString("dd.MM.yyyy")</div>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <a class="btn btn-sm btn-outline-secondary"
+           asp-action="Dashboard"
+           asp-route-month="@previousMonth.Month"
+           asp-route-year="@previousMonth.Year"
+           title="Previous month">&lt;</a>
+        <div class="text-muted dashboard-month-label">@Model.CurrentMonthLabel</div>
+        @if (Model.CanGoNextMonth)
+        {
+            <a class="btn btn-sm btn-outline-secondary"
+               asp-action="Dashboard"
+               asp-route-month="@nextMonth.Month"
+               asp-route-year="@nextMonth.Year"
+               title="Next month">&gt;</a>
+        }
+        else
+        {
+            <span class="btn btn-sm btn-outline-secondary disabled" title="Current month">&gt;</span>
+        }
+    </div>
+</div>
+
+<div class="row g-3">
+    @foreach (var widget in Model.Widgets)
+    {
+        var isErrorState = widget.IsError && widget.Count > 0;
+        var isPositiveState = widget.IsPositive && widget.Count > 0;
+        var cardClass = isErrorState
+            ? "border-danger bg-danger-subtle"
+            : isPositiveState
+                ? "border-success bg-success-subtle"
+                : "border-light-subtle";
+        var countClass = widget.Count == 0
+            ? "text-muted"
+            : isErrorState
+                ? "text-danger"
+                : isPositiveState
+                    ? "text-success"
+                    : "text-dark";
+        var isInlineSubtitle = !string.IsNullOrWhiteSpace(widget.Subtitle) && widget.Subtitle.TrimStart().StartsWith("(");
+        var formattedSubtitle = string.IsNullOrWhiteSpace(widget.Subtitle)
+            ? string.Empty
+            : widget.Subtitle
+                .Replace("♂", "<span class=\"text-primary\">♂</span>")
+                .Replace("♀", "<span class=\"text-danger\">♀</span>");
+
+        var widgetTitle = widget.Title ?? string.Empty;
+        var titleSeparatorIndex = widgetTitle.IndexOf(' ');
+        var widgetIcon = titleSeparatorIndex > 0 ? widgetTitle.Substring(0, titleSeparatorIndex) : string.Empty;
+        var widgetTitleText = titleSeparatorIndex > 0 ? widgetTitle.Substring(titleSeparatorIndex + 1) : widgetTitle;
+        var widgetIconClass = widget.Count == 0 ? "dashboard-widget-icon-muted" : string.Empty;
+        var widgetTextClass = widget.Count == 0 ? "text-muted dashboard-widget-zero-text" : string.Empty;
+
+        <div class="col-md-6 col-xl-4">
+            <a href="@widget.ActionUrl" class="text-decoration-none text-reset">
+                <div class="card shadow-sm h-100 @cardClass dashboard-widget-card">
+                    <div class="card-body dashboard-widget-body">
+                        <div class="d-flex justify-content-between align-items-start gap-3 w-100">
+                            <div>
+                                <div class="text-uppercase small text-muted">@widget.PeriodLabel</div>
+                                <h5 class="card-title mb-1 @widgetTextClass">
+                                    @if (!string.IsNullOrWhiteSpace(widgetIcon))
+                                    {
+                                        <span class="dashboard-widget-icon @widgetIconClass">@widgetIcon</span>
+                                    }
+                                    @widgetTitleText
+                                    @if (isInlineSubtitle)
+                                    {
+                                        <span class="small text-muted ms-1">@Html.Raw(formattedSubtitle)</span>
+                                    }
+                                </h5>
+                                @if (!string.IsNullOrWhiteSpace(widget.Subtitle) && !isInlineSubtitle)
+                                {
+                                    <div class="small text-muted">@Html.Raw(formattedSubtitle)</div>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(widget.SecondaryInfo))
+                                {
+                                    <div class="small text-muted">@widget.SecondaryInfo</div>
+                                }
+                            </div>
+                            <div class="dashboard-widget-count @countClass">
+                                @widget.Count
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    }
+</div>
+
+<style>
+    .dashboard-widget-card {
+        transition: transform .15s ease, box-shadow .15s ease;
+    }
+
+    .dashboard-widget-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .08);
+    }
+
+    .dashboard-widget-body {
+        min-height: 104px;
+        display: flex;
+        align-items: flex-start;
+    }
+
+    .dashboard-widget-count {
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1;
+        min-width: 3rem;
+        text-align: right;
+    }
+
+    .dashboard-widget-icon {
+        display: inline-block;
+        margin-right: .2rem;
+    }
+
+    .dashboard-widget-icon-muted {
+        filter: grayscale(1);
+        opacity: .45;
+    }
+
+    .dashboard-widget-zero-text .text-primary,
+    .dashboard-widget-zero-text .text-danger {
+        color: var(--bs-secondary-color) !important;
+    }
+
+    .dashboard-month-label {
+        min-width: 9rem;
+        text-align: center;
+    }
+</style>

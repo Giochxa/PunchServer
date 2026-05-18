@@ -1,0 +1,166 @@
+@model PunchServerMVC.Models.ViewModels.VacationIndexViewModel
+
+@{
+    ViewData["Title"] = "Vacations";
+}
+
+<style>
+    .vacation-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+</style>
+
+<h2>Vacations</h2>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <a asp-action="Create" class="btn btn-primary">Add Vacation</a>
+</div>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-3">
+        <label class="form-label">Employee</label>
+        <select name="employeeId" id="vacationEmployeeFilter" class="form-select">
+            <option value="">All Employees</option>
+            @foreach (var employee in Model.Employees.OrderBy(e => e.FullName))
+            {
+                <option value="@employee.Id" selected="@(Model.SelectedEmployeeId == employee.Id ? "selected" : null)">
+                    @employee.FullName
+                </option>
+            }
+        </select>
+    </div>
+
+    <div class="col-md-3">
+        <label class="form-label">Department</label>
+        <select name="departmentId" class="form-select">
+            <option value="">All Departments</option>
+            @foreach (var department in Model.Departments)
+            {
+                <option value="@department.Id" selected="@(Model.SelectedDepartmentId == department.Id ? "selected" : null)">
+                    @department.Name
+                </option>
+            }
+        </select>
+    </div>
+
+    <div class="col-md-2">
+        <label class="form-label">From</label>
+        <input type="date" name="fromDate" class="form-control" value="@Model.FilterFrom.ToString("yyyy-MM-dd")" />
+    </div>
+
+    <div class="col-md-2">
+        <label class="form-label">To</label>
+        <input type="date" name="toDate" class="form-control" value="@Model.FilterTo.ToString("yyyy-MM-dd")" />
+    </div>
+
+    <div class="col-md-2 d-flex align-items-end">
+        <div class="w-100 text-end">
+            <button type="submit" class="btn btn-outline-primary">Filter</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+        </div>
+    </div>
+</form>
+
+<div class="card">
+    <div class="card-header">
+        <strong>Employee Vacations</strong>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-striped mb-0">
+            <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>Department</th>
+                    <th>Type</th>
+                    <th>Range</th>
+                    <th>Notes</th>
+                    <th>Active</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var vacation in Model.Vacations)
+            {
+                <tr>
+                    <td>@vacation.EmployeeName</td>
+                    <td>@vacation.DepartmentName</td>
+                    <td>@vacation.VacationTypeName (@vacation.VacationTypeAbbreviation)</td>
+                    <td>@vacation.StartDate.ToString("dd.MM.yyyy") - @vacation.EndDate.ToString("dd.MM.yyyy")</td>
+                    <td>@vacation.Notes</td>
+                    <td>@vacation.IsActive</td>
+                    <td>
+                        <span class="vacation-actions">
+                            <a asp-action="Edit" asp-route-id="@vacation.Id" class="btn btn-sm btn-warning" title="Edit">✎</a>
+                            <form asp-action="Delete" method="post" style="display:inline" onsubmit="return confirm('Delete this vacation?');">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@vacation.Id" />
+                                <button type="submit" class="btn btn-sm btn-danger" title="Delete">🗑</button>
+                            </form>
+                        </span>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+
+<style>
+    #vacationEmployeeFilter + .select2-container .select2-selection--single {
+        height: calc(1.5em + .75rem + 2px);
+        border: 1px solid #ced4da;
+        border-radius: .375rem;
+    }
+
+    #vacationEmployeeFilter + .select2-container .select2-selection--single .select2-selection__rendered {
+        line-height: calc(1.5em + .75rem);
+        padding-left: .75rem;
+        padding-right: 2rem;
+    }
+
+    #vacationEmployeeFilter + .select2-container .select2-selection--single .select2-selection__arrow {
+        height: calc(1.5em + .75rem + 2px);
+        right: .5rem;
+    }
+</style>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(function () {
+            var $emp = $('#vacationEmployeeFilter');
+
+            if ($emp.hasClass('select2-hidden-accessible')) {
+                $emp.select2('destroy');
+            }
+
+            $emp.select2({
+                width: '100%',
+                placeholder: 'All Employees',
+                allowClear: true,
+                minimumResultsForSearch: 0
+            });
+        });
+    </script>
+}

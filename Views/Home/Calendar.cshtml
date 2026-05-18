@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 @using PunchServerMVC.Models.ViewModels
 @model CalendarViewModel
 @inject Microsoft.AspNetCore.Mvc.IUrlHelper Url
@@ -203,3 +204,1497 @@ if (punches.Any())
         window.addEventListener('DOMContentLoaded', filterDepartments);
     </script>
 }
+=======
+@using PunchServerMVC.Models.ViewModels
+@model CalendarViewModel
+@inject Microsoft.AspNetCore.Mvc.IUrlHelper Url
+@using System.Collections
+@using System.Linq
+
+@{
+    ViewData["Title"] = "Calendar View";
+    ViewBag.LoadJQueryInHead = true;
+    var monthName = new DateTime(Model.Year, Model.Month, 1).ToString("MMMM yyyy");
+    var holidayMap = Model.Holidays.ToDictionary(h => h.Date.Date, h => h);
+    var calendarPunchGraceMinutes = (ViewBag.CalendarPunchGraceMinutes as int?) ?? 15;
+    var selectedEmployeeFilterText = Model.SelectedEmployeeId.HasValue
+        ? Model.Employees.FirstOrDefault(e => e.Id == Model.SelectedEmployeeId.Value)?.FullName ?? "All Employees"
+        : "All Employees";
+    var hidePunchImages = (ViewBag.HidePunchImages as bool?) ?? false;
+    var hideProfilePictures = (ViewBag.HideProfilePictures as bool?) ?? false;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+    <style>
+        #employeeIdCalendar.calendar-employee-filter,
+        .calendar-employee-filter-placeholder {
+            height: calc(1.5em + .75rem + 2px);
+            min-height: calc(1.5em + .75rem + 2px);
+        }
+
+        .calendar-employee-select-wrap {
+            position: relative;
+            min-height: calc(1.5em + .75rem + 2px);
+        }
+
+        #employeeIdCalendarWrap .select2-container,
+        #employeeIdCalendarWrap .select2-selection--single {
+            min-height: calc(1.5em + .75rem + 2px) !important;
+            height: calc(1.5em + .75rem + 2px) !important;
+        }
+
+        #employeeIdCalendarWrap .select2-selection__rendered {
+            line-height: calc(1.5em + .75rem) !important;
+            padding-left: .75rem;
+            padding-right: 2rem;
+        }
+
+        #employeeIdCalendarWrap .select2-selection__arrow {
+            height: calc(1.5em + .75rem + 2px) !important;
+        }
+
+        .calendar-employee-filter-placeholder {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            padding: .375rem 2.25rem .375rem .75rem;
+            overflow: hidden;
+            color: #212529;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            pointer-events: none;
+            background-color: #fff;
+            border: 1px solid #ced4da;
+            border-radius: .375rem;
+        }
+
+        .calendar-employee-select-wrap:not(.is-select2-ready) #employeeIdCalendar.calendar-employee-filter {
+            opacity: 0;
+        }
+
+        .calendar-employee-select-wrap.is-select2-ready .calendar-employee-filter-placeholder {
+            display: none;
+        }
+    </style>
+}
+
+@section HeadScripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">@monthName</h2>
+    <button type="button" class="btn btn-outline-secondary no-print" onclick="window.print()">Print</button>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<form method="get" class="row g-2 mb-3 no-print">
+    <div class="col-md-3">
+        <select name="organisationId" id="organisationFilter" class="form-select">
+            <option value="">All Organisations</option>
+            @foreach (var org in Model.Organisations)
+            {
+                <option value="@org.Id" selected="@(Model.SelectedOrganisationId == org.Id ? "selected" : null)">
+                    @org.Name
+                </option>
+            }
+        </select>
+    </div>
+
+    <div class="col-md-3">
+        <select name="departmentId" id="departmentFilter" class="form-select">
+            <option value="">All Departments</option>
+            @foreach (var dept in Model.Departments)
+            {
+                <option value="@dept.Id"
+                        data-org="@dept.OrganisationId"
+                        selected="@(Model.SelectedDepartmentId == dept.Id ? "selected" : null)">
+                    @dept.Name
+                </option>
+            }
+        </select>
+    </div>
+
+    <div class="col-md-3">
+        <!-- ✅ Employee search dropdown -->
+        <div id="employeeIdCalendarWrap" class="calendar-employee-select-wrap">
+            <select name="employeeId" id="employeeIdCalendar" class="form-select calendar-employee-filter">
+                <option value="">All Employees</option>
+                @foreach (var emp in Model.Employees)
+                {
+                    <option value="@emp.Id" selected="@(Model.SelectedEmployeeId == emp.Id ? "selected" : null)">
+                        @emp.FullName
+                    </option>
+                }
+            </select>
+            <div class="calendar-employee-filter-placeholder">@selectedEmployeeFilterText</div>
+        </div>
+    </div>
+
+    <div class="col-md-2">
+        <div class="form-check mt-md-2 pt-md-1">
+            <input class="form-check-input"
+                   type="checkbox"
+                   name="showExtraPunchesOnly"
+                   value="true"
+                   id="showExtraPunchesOnly"
+                   @(((bool?)ViewBag.ShowExtraPunchesOnly ?? false) ? "checked" : "") />
+            <label class="form-check-label" for="showExtraPunchesOnly">Extra punches</label>
+        </div>
+    </div>
+
+    <div class="col-md-1 d-flex align-items-start justify-content-end gap-2">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a href="@Url.Action("Calendar")" class="btn btn-outline-secondary">Reset</a>
+    </div>
+</form>
+
+<script>
+    window.initializeCalendarEmployeeSelect = window.initializeCalendarEmployeeSelect || function () {
+        var $emp = window.jQuery ? $('#employeeIdCalendar') : null;
+        if (!$emp || !$emp.length || typeof $emp.select2 !== 'function') return;
+        if ($emp.hasClass('select2-hidden-accessible')) return;
+
+        $emp.select2({
+            width: '100%',
+            placeholder: 'All Employees',
+            allowClear: true,
+            minimumResultsForSearch: 0
+        });
+
+        $emp.next('.select2-container').css({
+            height: 'calc(1.5em + .75rem + 2px)',
+            minHeight: 'calc(1.5em + .75rem + 2px)'
+        });
+        document.getElementById('employeeIdCalendarWrap')?.classList.add('is-select2-ready');
+
+        $emp.off('select2:open.calendarFocus').on('select2:open.calendarFocus', function () {
+            setTimeout(function () {
+                var el = document.querySelector('.select2-container--open .select2-search__field');
+                if (el) el.focus();
+            }, 0);
+        });
+    };
+
+    window.initializeCalendarEmployeeSelect();
+</script>
+
+<div class="d-flex justify-content-between mb-3 no-print">
+    <a class="btn btn-outline-secondary"
+       href="@Url.Action("Calendar", new {
+           employeeId = Model.SelectedEmployeeId,
+           organisationId = Model.SelectedOrganisationId,
+           departmentId = Model.SelectedDepartmentId,
+           showExtraPunchesOnly = (bool?)ViewBag.ShowExtraPunchesOnly ?? false,
+           month = (Model.Month == 1 ? 12 : Model.Month - 1),
+           year = (Model.Month == 1 ? Model.Year - 1 : Model.Year)
+       })">Previous</a>
+
+    <a class="btn btn-outline-secondary"
+       href="@Url.Action("Calendar", new {
+           employeeId = Model.SelectedEmployeeId,
+           organisationId = Model.SelectedOrganisationId,
+           departmentId = Model.SelectedDepartmentId,
+           showExtraPunchesOnly = (bool?)ViewBag.ShowExtraPunchesOnly ?? false,
+           month = (Model.Month == 12 ? 1 : Model.Month + 1),
+           year = (Model.Month == 12 ? Model.Year + 1 : Model.Year)
+       })">Next</a>
+</div>
+
+@{
+    var showMissing = (ViewBag.ShowMissing as bool?) ?? false;
+    var showPunchTypeSuggestions = (ViewBag.ShowPunchTypeSuggestions as bool?) ?? false;
+    var missingFrom = ViewBag.MissingFrom != null ? (DateTime)ViewBag.MissingFrom : new DateTime(Model.Year, Model.Month, 1);
+    var missingTo = ViewBag.MissingTo != null ? (DateTime)ViewBag.MissingTo : new DateTime(Model.Year, Model.Month, DateTime.DaysInMonth(Model.Year, Model.Month));
+    var includeMissingIn = (ViewBag.IncludeMissingIn as bool?) ?? true;
+    var includeMissingOut = (ViewBag.IncludeMissingOut as bool?) ?? true;
+    // ViewBag holds a List of a controller-local type, so cast via IEnumerable -> dynamic
+    var missingSuggestions = (ViewBag.MissingPunchSuggestions as IEnumerable)?.Cast<dynamic>().ToList()
+                             ?? new List<dynamic>();
+    var punchTypeSuggestions = (ViewBag.PunchTypeSuggestions as IEnumerable)?.Cast<dynamic>().ToList()
+                              ?? new List<dynamic>();
+}
+
+<div class="card mb-3 no-print">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><strong>Missing Punches</strong> (schedule based)</span>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <input type="hidden" name="employeeId" value="@Model.SelectedEmployeeId" />
+            <input type="hidden" name="organisationId" value="@Model.SelectedOrganisationId" />
+            <input type="hidden" name="departmentId" value="@Model.SelectedDepartmentId" />
+            <input type="hidden" name="showExtraPunchesOnly" value="@(((bool?)ViewBag.ShowExtraPunchesOnly ?? false).ToString().ToLowerInvariant())" />
+            <input type="hidden" name="month" value="@Model.Month" />
+            <input type="hidden" name="year" value="@Model.Year" />
+
+            <div class="col-md-3">
+                <label class="form-label">From</label>
+                <input type="date" class="form-control" name="missingFrom" value="@missingFrom.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">To</label>
+                <input type="date" class="form-control" name="missingTo" value="@missingTo.ToString("yyyy-MM-dd")" />
+            </div>
+           <div class="col-md-2">
+    <div class="form-check mt-4">
+        <input class="form-check-input"
+               type="checkbox"
+               name="includeMissingIn"
+               value="true"
+               id="includeMissingIn"
+               @((bool)(ViewBag.IncludeMissingIn ?? true) ? "checked" : "") />
+        <label class="form-check-label" for="includeMissingIn">Suggest IN</label>
+    </div>
+</div>
+
+<div class="col-md-2">
+    <div class="form-check mt-4">
+        <input class="form-check-input"
+               type="checkbox"
+               name="includeMissingOut"
+               value="true"
+               id="includeMissingOut"
+               @((bool)(ViewBag.IncludeMissingOut ?? true) ? "checked" : "") />
+        <label class="form-check-label" for="includeMissingOut">Suggest OUT</label>
+    </div>
+</div>
+            <div class="col-md-2 text-end">
+                <div class="calendar-filter-actions d-flex gap-2">
+                    <button type="submit"
+                            name="showMissing"
+                            value="true"
+                            class="btn btn-sm btn-outline-primary calendar-filter-btn"
+                            style="white-space: nowrap; font-size: .8rem; padding-left: .5rem; padding-right: .5rem;">
+                        Find Missing
+                    </button>
+                    <button type="submit"
+                            name="showPunchTypeSuggestions"
+                            value="true"
+                            class="btn btn-sm btn-outline-warning calendar-filter-btn"
+                            style="white-space: nowrap; font-size: .8rem; padding-left: .5rem; padding-right: .5rem;">
+                        Compare Types
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        @if (showMissing)
+        {
+            <hr />
+
+            if (!missingSuggestions.Any())
+            {
+                <div class="alert alert-info mb-0">No missing punches found for the selected period.</div>
+            }
+            else
+            {
+                <form asp-action="AddMissingPunches" method="post" class="mt-2">
+                    <input type="hidden" name="employeeId" value="@Model.SelectedEmployeeId" />
+                    <input type="hidden" name="organisationId" value="@Model.SelectedOrganisationId" />
+                    <input type="hidden" name="departmentId" value="@Model.SelectedDepartmentId" />
+                    <input type="hidden" name="showExtraPunchesOnly" value="@(((bool?)ViewBag.ShowExtraPunchesOnly ?? false).ToString().ToLowerInvariant())" />
+                    <input type="hidden" name="missingFrom" value="@missingFrom.ToString("yyyy-MM-dd")" />
+                    <input type="hidden" name="missingTo" value="@missingTo.ToString("yyyy-MM-dd")" />
+                    <input type="hidden" name="includeMissingIn" value="@includeMissingIn.ToString().ToLowerInvariant()" />
+                    <input type="hidden" name="includeMissingOut" value="@includeMissingOut.ToString().ToLowerInvariant()" />
+                    <input type="hidden" name="month" value="@Model.Month" />
+                    <input type="hidden" name="year" value="@Model.Year" />
+
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="selectAllMissing" />
+                            <label class="form-check-label" for="selectAllMissing">Select all</label>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <select name="vacationTypeId" class="form-select form-select-sm" style="min-width: 220px;">
+                                <option value="">-- Vacation Type --</option>
+                                @foreach (var vacationType in Model.VacationTypes)
+                                {
+                                    <option value="@vacationType.Id">@vacationType.Name (@vacationType.Abbreviation)</option>
+                                }
+                            </select>
+                            <button type="submit" class="btn btn-success calendar-bulk-action-btn">Add Punches</button>
+                            <button type="submit"
+                                    class="btn btn-outline-primary calendar-bulk-action-btn"
+                                    formaction="@Url.Action("AddVacationsFromMissingSuggestions", "Home")"
+                                    formmethod="post"
+                                    @(Model.VacationTypes.Any() ? null : "disabled")>
+                                Add Vacations
+                            </button>
+                        </div>
+                    </div>
+
+                    @if (!Model.VacationTypes.Any())
+                    {
+                        <div class="alert alert-warning py-2 mb-2">Add at least one active vacation type to use Add Vacations.</div>
+                    }
+
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>Employee</th>
+                                    <th>Type</th>
+                                    <th>Suggested Time</th>
+                                    <th>Schedule</th>
+                                    <th>Reason</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (dynamic s in missingSuggestions)
+                                {
+                                    <tr>
+                                        <td style="width:30px;">
+                                            <input class="form-check-input missingRow" type="checkbox" name="selectedKeys" value="@s.Key" checked />
+                                        </td>
+                                        <td>@s.EmployeeName</td>
+                                        <td>@s.MissingType</td>
+                                        <td>@(((DateTime)s.SuggestedTimestamp).ToString("dd.MM.yyyy HH:mm"))</td>
+                                        <td>@(s.ScheduleType ?? "") (@(s.ShiftStart ?? "")-@(s.ShiftEnd ?? ""))</td>
+                                        <td>@s.Reason</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </form>
+            }
+        }
+
+        @if (showPunchTypeSuggestions)
+        {
+            <hr />
+
+            if (!punchTypeSuggestions.Any())
+            {
+                <div class="alert alert-info mb-0">No punch type changes suggested for the selected period.</div>
+            }
+            else
+            {
+                <form asp-action="ApplyPunchTypeSuggestions" method="post" class="mt-2">
+                    <input type="hidden" name="employeeId" value="@Model.SelectedEmployeeId" />
+                    <input type="hidden" name="organisationId" value="@Model.SelectedOrganisationId" />
+                    <input type="hidden" name="departmentId" value="@Model.SelectedDepartmentId" />
+                    <input type="hidden" name="showExtraPunchesOnly" value="@(((bool?)ViewBag.ShowExtraPunchesOnly ?? false).ToString().ToLowerInvariant())" />
+                    <input type="hidden" name="month" value="@Model.Month" />
+                    <input type="hidden" name="year" value="@Model.Year" />
+                    <input type="hidden" name="missingFrom" value="@missingFrom.ToString("yyyy-MM-dd")" />
+                    <input type="hidden" name="missingTo" value="@missingTo.ToString("yyyy-MM-dd")" />
+
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="selectAllPunchTypeSuggestions" />
+                            <label class="form-check-label" for="selectAllPunchTypeSuggestions">Select all</label>
+                        </div>
+                        <button type="submit" class="btn btn-warning">Apply Selected Type Changes</button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>Employee</th>
+                                    <th>Timestamp</th>
+                                    <th>Schedule</th>
+                                    <th>Current</th>
+                                    <th>Proposed</th>
+                                    <th>Reason</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (dynamic s in punchTypeSuggestions)
+                                {
+                                    <tr>
+                                        <td style="width:30px;">
+                                            <input class="form-check-input punchTypeRow" type="checkbox" name="selectedPunchIds" value="@s.PunchId" checked />
+                                        </td>
+                                        <td>@s.EmployeeName</td>
+                                        <td>@(((DateTime)s.Timestamp).ToString("dd.MM.yyyy HH:mm"))</td>
+                                        <td>@(s.ScheduleType ?? "") (@(s.ShiftStart ?? "")-@(s.ShiftEnd ?? ""))</td>
+                                        <td>@s.CurrentType</td>
+                                        <td><strong>@s.ProposedType</strong></td>
+                                        <td>@s.Reason</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </form>
+            }
+        }
+    </div>
+</div>
+
+<div id="calendarPrintArea">
+<div class="calendar-print-title">@monthName</div>
+<table class="table table-bordered calendar text-center">
+    <thead>
+        <tr>
+            @{
+                var daysOfWeek = Enum.GetValues(typeof(DayOfWeek))
+                    .Cast<DayOfWeek>()
+                    .OrderBy(d => (int)d == 0 ? 7 : (int)d);
+            }
+            @foreach (var day in daysOfWeek)
+            {
+                var weekend = day == DayOfWeek.Saturday || day == DayOfWeek.Sunday;
+                <th class="@(weekend ? "bg-light text-danger" : "")">@day</th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            var firstDayOfMonth = new DateTime(Model.Year, Model.Month, 1);
+            var daysInMonth = DateTime.DaysInMonth(Model.Year, Model.Month);
+            var startOffset = ((int)firstDayOfMonth.DayOfWeek + 6) % 7;
+            var totalCells = (int)Math.Ceiling((startOffset + daysInMonth) / 7.0) * 7;
+            var employeesById = Model.Employees.ToDictionary(e => e.Id);
+
+            for (int cell = 0; cell < totalCells; cell++)
+            {
+                if (cell % 7 == 0)
+                {
+                    @:<tr>
+                }
+
+                var isValidDay = cell >= startOffset && (cell - startOffset + 1) <= daysInMonth;
+                var currentDate = isValidDay ? firstDayOfMonth.AddDays(cell - startOffset) : DateTime.MinValue;
+                var isWeekend = isValidDay && (currentDate.DayOfWeek == DayOfWeek.Saturday || currentDate.DayOfWeek == DayOfWeek.Sunday);
+                var isHoliday = isValidDay && holidayMap.ContainsKey(currentDate.Date);
+                List<CalendarEmployeeGroup> groupedEntries = null;
+                var hasGroupedData = isValidDay && Model.GroupedCalendarEntries.TryGetValue(currentDate.Date, out groupedEntries);
+
+                <td class="align-top @((isWeekend || isHoliday) ? "bg-light text-danger" : "")" style="position: relative;">
+                    @if (isValidDay)
+                    {
+                        var hasScheduleForSelectedEmployee = false;
+                        if (Model.SelectedEmployeeId.HasValue && hasGroupedData && groupedEntries != null)
+                        {
+                            foreach (var groupedEntry in groupedEntries)
+                            {
+                                int? groupedEmployeeId = groupedEntry.EmployeeId;
+                                List<CalendarEntry> groupedSchedules = groupedEntry.Schedules;
+
+                                if (groupedEmployeeId == Model.SelectedEmployeeId && groupedSchedules.Count > 0)
+                                {
+                                    hasScheduleForSelectedEmployee = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        <div class="calendar-day-header d-flex justify-content-between align-items-center gap-1">
+                            <div class="d-flex align-items-center gap-1">
+                                <strong>@currentDate.Day</strong>
+                                @if (isHoliday)
+                                {
+                                    var holiday = holidayMap[currentDate.Date];
+                                    var holidayTooltip = string.IsNullOrWhiteSpace(holiday.Description)
+                                        ? holiday.Name
+                                        : $"{holiday.Name} - {holiday.Description}";
+                                    <span class="calendar-holiday-marker"
+                                          title="@holidayTooltip"
+                                          aria-label="@holidayTooltip">
+                                        Ⓗ
+                                    </span>
+                                }
+                            </div>
+                            @if (Model.SelectedEmployeeId.HasValue)
+                            {
+                                <div class="calendar-day-actions d-flex gap-1">
+                                    <button type="button" class="btn btn-sm btn-success calendar-action-btn calendar-mini-btn no-print"
+                                            onclick="openAddPunchModal(@Model.SelectedEmployeeId, '@currentDate.ToString("yyyy-MM-dd")')">
+                                        +P
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary calendar-action-btn calendar-mini-btn no-print"
+                                            onclick="openAddVacationModal(@Model.SelectedEmployeeId, '@currentDate.ToString("yyyy-MM-dd")')">
+                                        +V
+                                    </button>
+                                    @if (!hasScheduleForSelectedEmployee)
+                                    {
+                                        <a class="btn btn-sm btn-outline-dark calendar-action-btn calendar-mini-btn no-print"
+                                           href="@Url.Action("Create", "Schedules", new {
+                                               employeeId = Model.SelectedEmployeeId,
+                                               startDate = currentDate.ToString("yyyy-MM-dd"),
+                                               returnToCalendar = true,
+                                               calendarMonth = Model.Month,
+                                               calendarYear = Model.Year,
+                                               calendarEmployeeId = Model.SelectedEmployeeId,
+                                               calendarOrganisationId = Model.SelectedOrganisationId,
+                                               calendarDepartmentId = Model.SelectedDepartmentId
+                                           })">
+                                            +S
+                                        </a>
+                                    }
+                                </div>
+                            }
+                        </div>
+
+                        @if (hasGroupedData && groupedEntries != null)
+                        {
+                            foreach (var group in groupedEntries)
+                            {
+                                int? groupEmployeeId = group.EmployeeId;
+                                var profileImageUrl = !hideProfilePictures && groupEmployeeId.HasValue
+                                    ? Url.Action("ProfileImage", "Employees", new { id = groupEmployeeId.Value })
+                                    : null;
+                                <div class="border-top mt-1 pt-1 small">
+                                    <strong>
+                                        <span class="calendar-employee-tooltip-trigger"
+                                              tabindex="@(string.IsNullOrWhiteSpace(profileImageUrl) ? null : "0")"
+                                              data-image-url="@profileImageUrl">
+                                            <span class="calendar-employee-name">@group.EmployeeName</span>
+                                        </span>
+                                    </strong><br />
+                                    @{
+                                        List<CalendarEntry> punches = group.Punches;
+                                        List<CalendarEntry> schedulesForDay = group.Schedules;
+                                        List<CalendarEntry> vacations = group.Vacations;
+
+                                        if (schedulesForDay.Any())
+                                        {
+                                            foreach (var schedule in schedulesForDay)
+                                            {
+                                                var scheduleStartText = schedule.ScheduleStart == TimeSpan.Zero
+                                                    ? string.Empty
+                                                    : schedule.ScheduleStart.ToString();
+                                                var scheduleEndText = schedule.ScheduleEnd == new TimeSpan(23, 59, 0)
+                                                    ? string.Empty
+                                                    : schedule.ScheduleEnd.ToString();
+                                                var scheduleIcon = schedule.IsNightShift ? "🌑" : "☀️";
+
+                                                <div class="mb-1">
+                                                    <div class="calendar-schedule-row d-flex justify-content-between align-items-center gap-1">
+                                                        <div class="text-primary calendar-schedule-text">
+                                                            @scheduleIcon @scheduleStartText - @scheduleEndText
+                                                        </div>
+                                                        @if (schedule.ScheduleId.HasValue && !schedule.IsScheduleContinuation)
+                                                        {
+                                                            <div class="d-flex gap-1 flex-shrink-0">
+                                                                <a class="btn btn-sm btn-outline-primary calendar-mini-btn no-print"
+                                                                   href="@Url.Action("Edit", "Schedules", new {
+                                                                       id = schedule.ScheduleId,
+                                                                       returnToCalendar = true,
+                                                                       calendarMonth = Model.Month,
+                                                                       calendarYear = Model.Year,
+                                                                       calendarEmployeeId = Model.SelectedEmployeeId ?? schedule.EmployeeId,
+                                                                       calendarOrganisationId = Model.SelectedOrganisationId,
+                                                                       calendarDepartmentId = Model.SelectedDepartmentId
+                                                                   })">
+                                                                    ✏️
+                                                                </a>
+                                                                <button type="button"
+                                                                        class="btn btn-sm btn-outline-danger calendar-mini-btn no-print"
+                                                                        onclick="deleteScheduleDay(@schedule.ScheduleId, '@currentDate.ToString("yyyy-MM-dd")')">
+                                                                    🗑️
+                                                                </button>
+                                                            </div>
+                                                        }
+                                                    </div>
+                                                    @if (!string.IsNullOrWhiteSpace(schedule.ScheduleNote))
+                                                    {
+                                                        <div class="small text-muted">Note: @schedule.ScheduleNote</div>
+                                                    }
+                                                </div>
+                                            }
+                                        }
+
+                                        if (vacations.Any())
+                                        {
+                                            foreach (var vacation in vacations)
+                                            {
+                                                <div class="text-danger fw-semibold">
+                                                    @if (!string.IsNullOrWhiteSpace(vacation.VacationNotes))
+                                                    {
+                                                        <span class="calendar-vacation-note-trigger"
+                                                              tabindex="0"
+                                                              data-note-text="@vacation.VacationNotes">🌴</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span>🌴</span>
+                                                    }
+                                                    @vacation.VacationTypeAbbreviation
+                                                    <span class="text-muted">
+                                                        (@vacation.VacationStartDate?.ToString("dd.MM") - @vacation.VacationEndDate?.ToString("dd.MM"))
+                                                    </span>
+                                                </div>
+                                            }
+                                        }
+
+                                        if (punches.Any())
+                                        {
+                                            var punchIn = punches.First().PunchTime;
+                                            var punchOut = punches.Count > 1 ? punches.Last().PunchTime : (DateTime?)null;
+
+                                            var firstScheduleForDay = schedulesForDay.FirstOrDefault();
+                                            var expectedStart = firstScheduleForDay?.ScheduleStart ?? TimeSpan.Zero;
+                                            var expectedEnd = firstScheduleForDay?.ScheduleEnd ?? TimeSpan.Zero;
+
+                                            var punchInClass = (punchIn.TimeOfDay > expectedStart.Add(TimeSpan.FromMinutes(calendarPunchGraceMinutes))) ? "text-danger" : "text-success";
+                                            var punchOutClass = (punchOut != null && punchOut.Value.TimeOfDay < expectedEnd.Subtract(TimeSpan.FromMinutes(calendarPunchGraceMinutes))) ? "text-danger" : "text-success";
+
+                                            foreach (var punch in punches)
+                                            {
+                                                var punchClass = punch.PunchType == "In" ? punchInClass : punchOutClass;
+                                                var punchInfoLabel = punch.IsAutoPunchOut
+                                                    ? "Auto Ⓑ"
+                                                    : punch.IsManualEdited
+                                                        ? "Edited manually"
+                                                        : punch.IsManualCreated
+                                                            ? "Added manually"
+                                                            : "Auto";
+                                                var punchMarker = punch.IsAutoPunchOut
+                                                    ? "Ⓑ"
+                                                    : punch.IsManualEdited
+                                                        ? "Ⓔ"
+                                                        : punch.IsManualCreated
+                                                            ? "Ⓜ"
+                                                            : "Ⓐ";
+                                                var punchMarkerClass = punch.IsAutoPunchOut
+                                                    ? "text-primary"
+                                                    : punch.IsManualEdited || punch.IsManualCreated
+                                                        ? "text-danger"
+                                                        : "text-success";
+
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <span class="@punchClass">
+                                                        @punch.PunchType: @punch.PunchTime.ToString("HH:mm")
+                                                        <span class="calendar-punch-marker-wrapper"
+                                                              tabindex="0"
+                                                              data-tooltip-title="@punchInfoLabel"
+                                                              data-tooltip-title-class="@punchMarkerClass"
+                                                              data-image-url="@(!hidePunchImages && !string.IsNullOrWhiteSpace(punch.PunchImageUrl) ? $"/punch_images/{punch.PunchImageUrl}" : string.Empty)"
+                                                              data-created-text="Created: @(punch.PunchCreatedAt?.ToLocalTime().ToString("dd.MM.yyyy HH:mm") ?? "-")"
+                                                              data-note-text="@(!string.IsNullOrWhiteSpace(punch.Note) ? $"Note: {punch.Note}" : string.Empty)">
+                                                            <span class="@punchMarkerClass calendar-punch-marker">@punchMarker</span>
+                                                        </span>
+                                                    </span>
+                                                    <div>
+                                                        <button type="button" class="btn btn-sm btn-outline-primary px-1 py-0 no-print"
+                                                                onclick='openEditPunchModal(@punch.PunchId, "@punch.PunchTime.ToString("yyyy-MM-dd")", "@punch.PunchTime.ToString("HH:mm")", "@punch.PunchType", @Html.Raw(System.Text.Json.JsonSerializer.Serialize(punch.Note ?? string.Empty)))'>
+                                                            ✏️
+                                                        </button>
+                                                        <button type="button" class="btn btn-sm btn-outline-danger px-1 py-0 no-print"
+                                                                onclick="deletePunch(@punch.PunchId)">
+                                                            🗑️
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            }
+                                        }
+                                    }
+                                </div>
+                            }
+                        }
+                    }
+                </td>
+
+                if (cell % 7 == 6)
+                {
+                    @:</tr>
+                }
+            }
+        }
+    </tbody>
+</table>
+</div>
+
+<div id="calendarSharedPunchTooltip" class="calendar-shared-tooltip">
+    <span id="calendarSharedPunchTooltipTitle" class="calendar-punch-tooltip-title"></span>
+    <img id="calendarSharedPunchTooltipImage"
+         alt="Punch image"
+         class="calendar-punch-tooltip-image"
+         style="display: none;"
+         onerror="this.style.display='none'" />
+    <span id="calendarSharedPunchTooltipNoImage" class="calendar-punch-tooltip-text">No image</span>
+    <span id="calendarSharedPunchTooltipCreated" class="calendar-punch-tooltip-text"></span>
+    <span id="calendarSharedPunchTooltipNote" class="calendar-punch-tooltip-text" style="display: none;"></span>
+</div>
+
+<div id="calendarSharedEmployeeTooltip" class="calendar-shared-tooltip calendar-shared-employee-tooltip">
+    <img id="calendarSharedEmployeeTooltipImage"
+         alt="Profile image"
+         class="calendar-employee-tooltip-image"
+         style="display: none;"
+         onerror="this.removeAttribute('src'); this.style.display='none'; this.closest('#calendarSharedEmployeeTooltip').style.display='none';" />
+</div>
+
+<div id="calendarSharedVacationTooltip" class="calendar-shared-tooltip">
+    <span id="calendarSharedVacationTooltipNote" class="calendar-punch-tooltip-text"></span>
+</div>
+
+<!-- Add Punch Modal -->
+<div class="modal fade" id="addPunchModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="AddPunchFromCalendar" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Punch</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="employeeId" id="addEmployeeId" />
+                    <input type="hidden" name="punchDate" id="addPunchDate" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Date</label>
+                        <input type="text" class="form-control" id="addPunchDateDisplay" readonly />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Time</label>
+                        <input type="time" name="punchTime" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Type</label>
+                        <select name="punchType" class="form-select" required>
+                            <option value="In">In</option>
+                            <option value="Out">Out</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Note</label>
+                        <textarea name="note" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Punch</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Vacation Modal -->
+<div class="modal fade" id="addVacationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="AddVacationFromCalendar" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Vacation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="employeeId" id="addVacationEmployeeId" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Start Date</label>
+                        <input type="date" name="startDate" id="addVacationStartDate" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">End Date</label>
+                        <input type="date" name="endDate" id="addVacationEndDate" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Vacation Type</label>
+                        <select name="vacationTypeId" class="form-select" required>
+                            <option value="">-- Select Vacation Type --</option>
+                            @foreach (var vacationType in Model.VacationTypes)
+                            {
+                                <option value="@vacationType.Id">@vacationType.Name (@vacationType.Abbreviation)</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <input type="text" name="notes" class="form-control" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Vacation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Punch Modal -->
+<div class="modal fade" id="editPunchModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="EditPunchFromCalendar" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Punch</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="punchId" id="editPunchId" />
+                    <input type="hidden" name="punchDate" id="editPunchDate" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Date</label>
+                        <input type="text" class="form-control" id="editPunchDateDisplay" readonly />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Time</label>
+                        <input type="time" name="punchTime" id="editPunchTime" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Type</label>
+                        <select name="punchType" id="editPunchType" class="form-select" required>
+                            <option value="In">In</option>
+                            <option value="Out">Out</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Note</label>
+                        <textarea name="note" id="editPunchNote" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Form (hidden) -->
+<form id="deletePunchForm" asp-action="DeletePunchFromCalendar" method="post" style="display: none;">
+    <input type="hidden" name="punchId" id="deletePunchId" />
+</form>
+
+<form id="deleteScheduleDayForm" asp-controller="Schedules" asp-action="DeleteDayFromCalendar" method="post" style="display: none;">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="id" id="deleteScheduleId" />
+    <input type="hidden" name="selectedDate" id="deleteScheduleDate" />
+    <input type="hidden" name="calendarMonth" value="@Model.Month" />
+    <input type="hidden" name="calendarYear" value="@Model.Year" />
+    <input type="hidden" name="calendarEmployeeId" value="@Model.SelectedEmployeeId" />
+    <input type="hidden" name="calendarOrganisationId" value="@Model.SelectedOrganisationId" />
+    <input type="hidden" name="calendarDepartmentId" value="@Model.SelectedDepartmentId" />
+</form>
+
+<style>
+    .calendar td {
+        height: 130px;
+        vertical-align: top;
+        padding: 6px;
+    }
+
+    .calendar-day-header {
+        flex-wrap: nowrap;
+    }
+
+    .calendar-day-actions {
+        flex-wrap: nowrap;
+        min-width: 0;
+    }
+
+    .calendar-holiday-marker {
+        color: #dc3545;
+        font-weight: 700;
+        line-height: 1;
+        cursor: help;
+    }
+
+    .calendar-holiday-marker-wrapper {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .calendar-holiday-tooltip {
+        display: none;
+        position: absolute;
+        left: 50%;
+        top: calc(100% + 4px);
+        transform: translateX(-50%);
+        z-index: 50;
+        min-width: 180px;
+        max-width: 220px;
+        padding: .5rem;
+        border: 1px solid #ced4da;
+        border-radius: .375rem;
+        background: #fff;
+        color: #212529;
+        box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .15);
+        text-align: left;
+        white-space: normal;
+        font-size: .75rem;
+        line-height: 1.35;
+    }
+
+    .calendar-holiday-marker-wrapper:hover .calendar-holiday-tooltip {
+        display: block;
+    }
+
+    .calendar-action-btn {
+        white-space: nowrap;
+    }
+
+    .calendar-mini-btn {
+        padding: .15rem .35rem;
+        font-size: .8rem;
+        line-height: 1.1;
+        min-width: 2rem;
+    }
+
+    .calendar-schedule-row {
+        flex-wrap: nowrap;
+    }
+
+    .calendar-schedule-text {
+        white-space: nowrap;
+        min-width: 0;
+        font-size: .82rem;
+    }
+
+    .calendar-filter-actions {
+        flex-wrap: nowrap;
+        justify-content: flex-end;
+    }
+
+    .calendar-filter-btn {
+        white-space: nowrap;
+        font-size: .8rem;
+        padding-left: .5rem;
+        padding-right: .5rem;
+    }
+
+    .calendar-bulk-action-btn {
+        white-space: nowrap;
+    }
+
+    /* ✅ Your requested dropdown height + padding */
+    .calendar-punch-marker-wrapper {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        margin-left: .15rem;
+    }
+
+    .calendar-vacation-note-trigger {
+        cursor: help;
+        outline: none;
+    }
+
+    .calendar-punch-marker {
+        cursor: help;
+        font-weight: 700;
+    }
+
+    .calendar-shared-tooltip {
+        display: none;
+        position: fixed;
+        z-index: 1055;
+        min-width: 180px;
+        max-width: 220px;
+        padding: .5rem;
+        border: 1px solid #ced4da;
+        border-radius: .375rem;
+        background: #fff;
+        color: #212529;
+        box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .15);
+        text-align: left;
+        white-space: normal;
+        pointer-events: none;
+    }
+
+    .calendar-shared-employee-tooltip {
+        min-width: auto;
+        max-width: none;
+        padding: .4rem;
+    }
+
+    .calendar-punch-tooltip-title {
+        display: block;
+        margin-bottom: .25rem;
+        font-weight: 700;
+    }
+
+    .calendar-punch-tooltip-text {
+        display: block;
+        font-size: .75rem;
+        color: #495057;
+    }
+
+    .calendar-punch-tooltip-image {
+        display: block;
+        width: 100%;
+        max-height: 150px;
+        object-fit: contain;
+        margin: .25rem 0;
+        border-radius: .25rem;
+        border: 1px solid #dee2e6;
+        background: #f8f9fa;
+    }
+
+    .calendar-employee-tooltip-trigger {
+        display: inline-flex;
+        outline: none;
+    }
+
+    .calendar-employee-name {
+        cursor: help;
+    }
+
+    .calendar-employee-tooltip-image {
+        display: block;
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: .25rem;
+        background: #f8f9fa;
+    }
+
+    .select2-container .select2-results__options {
+        max-height: 400px !important;
+    }
+
+    .select2-container--default .select2-results__option {
+        padding: 8px 12px;
+    }
+
+    /* (Optional) Keep Select2 height aligned with Bootstrap */
+    .select2-container .select2-selection--single {
+        height: calc(1.5em + .75rem + 2px) !important;
+        border: 1px solid #ced4da;
+        border-radius: .375rem;
+    }
+
+    #employeeIdCalendar.calendar-employee-filter {
+        height: calc(1.5em + .75rem + 2px);
+        min-height: calc(1.5em + .75rem + 2px);
+        line-height: calc(1.5em + .75rem);
+        padding-top: .375rem;
+        padding-bottom: .375rem;
+    }
+
+    .calendar-employee-select-wrap {
+        position: relative;
+        min-height: calc(1.5em + .75rem + 2px);
+    }
+
+    .calendar-employee-filter-placeholder {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        height: calc(1.5em + .75rem + 2px);
+        padding: .375rem 2.25rem .375rem .75rem;
+        overflow: hidden;
+        color: #212529;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        pointer-events: none;
+        background-color: #fff;
+        border: 1px solid #ced4da;
+        border-radius: .375rem;
+    }
+
+    .calendar-employee-select-wrap:not(.is-select2-ready) #employeeIdCalendar.calendar-employee-filter {
+        opacity: 0;
+    }
+
+    .calendar-employee-select-wrap.is-select2-ready .calendar-employee-filter-placeholder {
+        display: none;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: calc(1.5em + .75rem) !important;
+        padding-left: .75rem;
+        padding-right: 2rem;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: calc(1.5em + .75rem + 2px) !important;
+        right: .5rem;
+    }
+
+    .calendar-print-title {
+        display: none;
+    }
+
+    @@media print {
+        body * {
+            visibility: hidden;
+        }
+
+        #calendarPrintArea,
+        #calendarPrintArea * {
+            visibility: visible;
+        }
+
+        #calendarPrintArea {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+        }
+
+        .calendar-print-title {
+            display: block;
+            font-size: 1.75rem;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .no-print {
+            display: none !important;
+        }
+
+        .calendar td {
+            height: 120px;
+        }
+    }
+</style>
+
+@section Scripts {
+    <script>
+        window.initializeCalendarEmployeeSelect = window.initializeCalendarEmployeeSelect || function () {
+            var $emp = $('#employeeIdCalendar');
+            if (!$emp.length || typeof $emp.select2 !== 'function') return;
+
+            if ($emp.hasClass('select2-hidden-accessible')) return;
+
+            $emp.select2({
+                width: '100%',
+                placeholder: 'All Employees',
+                allowClear: true,
+                minimumResultsForSearch: 0
+            });
+
+            $emp.next('.select2-container').css({
+                height: 'calc(1.5em + .75rem + 2px)',
+                minHeight: 'calc(1.5em + .75rem + 2px)'
+            });
+            document.getElementById('employeeIdCalendarWrap')?.classList.add('is-select2-ready');
+
+            $emp.off('select2:open.calendarFocus').on('select2:open.calendarFocus', function () {
+                setTimeout(function () {
+                    var el = document.querySelector('.select2-container--open .select2-search__field');
+                    if (el) el.focus();
+                }, 0);
+            });
+        };
+
+        window.initializeCalendarEmployeeSelect();
+
+        const orgFilter = document.getElementById('organisationFilter');
+        const deptFilter = document.getElementById('departmentFilter');
+
+        function filterDepartments() {
+            const selectedOrg = orgFilter.value;
+            const options = deptFilter.options;
+
+            for (let i = 0; i < options.length; i++) {
+                const opt = options[i];
+                const orgId = opt.getAttribute('data-org');
+
+                if (!opt.value) continue;
+                opt.hidden = (!selectedOrg || orgId === selectedOrg) ? false : true;
+            }
+
+            const selected = deptFilter.selectedOptions[0];
+            if (selected && selected.hidden) {
+                deptFilter.value = '';
+            }
+        }
+
+        orgFilter.addEventListener('change', filterDepartments);
+        window.addEventListener('DOMContentLoaded', filterDepartments);
+
+        // Missing punches select all
+        const selectAllMissing = document.getElementById('selectAllMissing');
+        if (selectAllMissing) {
+            selectAllMissing.addEventListener('change', function () {
+                const rows = document.querySelectorAll('.missingRow');
+                rows.forEach(r => r.checked = selectAllMissing.checked);
+            });
+        }
+
+        const selectAllPunchTypeSuggestions = document.getElementById('selectAllPunchTypeSuggestions');
+        if (selectAllPunchTypeSuggestions) {
+            selectAllPunchTypeSuggestions.addEventListener('change', function () {
+                const rows = document.querySelectorAll('.punchTypeRow');
+                rows.forEach(r => r.checked = selectAllPunchTypeSuggestions.checked);
+            });
+        }
+
+
+        const sharedPunchTooltip = document.getElementById('calendarSharedPunchTooltip');
+        const sharedPunchTooltipTitle = document.getElementById('calendarSharedPunchTooltipTitle');
+        const sharedPunchTooltipImage = document.getElementById('calendarSharedPunchTooltipImage');
+        const sharedPunchTooltipNoImage = document.getElementById('calendarSharedPunchTooltipNoImage');
+        const sharedPunchTooltipCreated = document.getElementById('calendarSharedPunchTooltipCreated');
+        const sharedPunchTooltipNote = document.getElementById('calendarSharedPunchTooltipNote');
+        const sharedEmployeeTooltip = document.getElementById('calendarSharedEmployeeTooltip');
+        const sharedEmployeeTooltipImage = document.getElementById('calendarSharedEmployeeTooltipImage');
+        const sharedVacationTooltip = document.getElementById('calendarSharedVacationTooltip');
+        const sharedVacationTooltipNote = document.getElementById('calendarSharedVacationTooltipNote');
+        const hideCalendarPunchImages = @hidePunchImages.ToString().ToLowerInvariant();
+
+        function positionSharedTooltip(trigger, tooltip, event) {
+            const rect = trigger.getBoundingClientRect();
+            tooltip.style.display = 'block';
+
+            const tooltipRect = tooltip.getBoundingClientRect();
+            const viewportPadding = 8;
+            const mouseOffset = 12;
+            const hasMousePoint = event && typeof event.clientX === 'number' && typeof event.clientY === 'number';
+            const anchorX = hasMousePoint ? event.clientX : rect.left + (rect.width / 2);
+            const anchorY = hasMousePoint ? event.clientY : rect.bottom;
+            const maxLeft = window.innerWidth - tooltipRect.width - viewportPadding;
+            const maxTop = window.innerHeight - tooltipRect.height - viewportPadding;
+
+            let left = hasMousePoint
+                ? anchorX + mouseOffset
+                : anchorX - (tooltipRect.width / 2);
+            let top = hasMousePoint
+                ? anchorY + mouseOffset
+                : rect.bottom + 4;
+
+            if (top + tooltipRect.height > window.innerHeight - viewportPadding) {
+                top = hasMousePoint
+                    ? anchorY - tooltipRect.height - mouseOffset
+                    : rect.top - tooltipRect.height - 4;
+            }
+
+            left = Math.max(viewportPadding, Math.min(left, maxLeft));
+            top = Math.max(viewportPadding, Math.min(top, maxTop));
+
+            tooltip.style.left = `${left}px`;
+            tooltip.style.top = `${top}px`;
+        }
+
+        function hideSharedTooltip(tooltip) {
+            if (tooltip) {
+                tooltip.style.display = 'none';
+            }
+        }
+
+        document.querySelectorAll('.calendar-punch-marker-wrapper').forEach(wrapper => {
+            let lastPunchTooltipEvent = null;
+
+            const showPunchTooltip = (event) => {
+                lastPunchTooltipEvent = event;
+                const title = wrapper.dataset.tooltipTitle || '';
+                const titleClass = wrapper.dataset.tooltipTitleClass || '';
+                const imageUrl = wrapper.dataset.imageUrl || '';
+                const createdText = wrapper.dataset.createdText || '';
+                const noteText = wrapper.dataset.noteText || '';
+
+                sharedPunchTooltipTitle.className = `calendar-punch-tooltip-title ${titleClass}`.trim();
+                sharedPunchTooltipTitle.textContent = title;
+                sharedPunchTooltipCreated.textContent = createdText;
+
+                if (noteText) {
+                    sharedPunchTooltipNote.textContent = noteText;
+                    sharedPunchTooltipNote.style.display = 'block';
+                } else {
+                    sharedPunchTooltipNote.textContent = '';
+                    sharedPunchTooltipNote.style.display = 'none';
+                }
+
+                if (!hideCalendarPunchImages && imageUrl) {
+                    if (sharedPunchTooltipImage.getAttribute('src') !== imageUrl) {
+                        sharedPunchTooltipImage.onload = () => positionSharedTooltip(wrapper, sharedPunchTooltip, lastPunchTooltipEvent);
+                        sharedPunchTooltipImage.setAttribute('src', imageUrl);
+                    }
+
+                    sharedPunchTooltipImage.style.display = 'block';
+                    sharedPunchTooltipNoImage.style.display = 'none';
+                } else {
+                    sharedPunchTooltipImage.removeAttribute('src');
+                    sharedPunchTooltipImage.style.display = 'none';
+                    sharedPunchTooltipNoImage.style.display = hideCalendarPunchImages ? 'none' : 'block';
+                }
+
+                positionSharedTooltip(wrapper, sharedPunchTooltip, event);
+            };
+
+            wrapper.addEventListener('mouseenter', showPunchTooltip, { passive: true });
+            wrapper.addEventListener('mousemove', event => {
+                lastPunchTooltipEvent = event;
+                if (sharedPunchTooltip.style.display === 'block') {
+                    positionSharedTooltip(wrapper, sharedPunchTooltip, event);
+                }
+            }, { passive: true });
+            wrapper.addEventListener('focus', showPunchTooltip, { passive: true });
+            wrapper.addEventListener('mouseleave', () => hideSharedTooltip(sharedPunchTooltip), { passive: true });
+            wrapper.addEventListener('blur', () => hideSharedTooltip(sharedPunchTooltip), { passive: true });
+        });
+
+        document.querySelectorAll('.calendar-employee-tooltip-trigger').forEach(trigger => {
+            const showEmployeeTooltip = () => {
+                const imageUrl = trigger.dataset.imageUrl || '';
+
+                if (!imageUrl) {
+                    sharedEmployeeTooltipImage.removeAttribute('src');
+                    sharedEmployeeTooltipImage.style.display = 'none';
+                    hideSharedTooltip(sharedEmployeeTooltip);
+                    return;
+                }
+
+                const showLoadedEmployeeImage = () => {
+                    sharedEmployeeTooltipImage.style.display = 'block';
+                    positionSharedTooltip(trigger, sharedEmployeeTooltip);
+                };
+
+                const hideBrokenEmployeeImage = () => {
+                    sharedEmployeeTooltipImage.removeAttribute('src');
+                    sharedEmployeeTooltipImage.style.display = 'none';
+                    hideSharedTooltip(sharedEmployeeTooltip);
+                };
+
+                if (sharedEmployeeTooltipImage.getAttribute('src') !== imageUrl) {
+                    sharedEmployeeTooltipImage.style.display = 'none';
+                    sharedEmployeeTooltipImage.onload = showLoadedEmployeeImage;
+                    sharedEmployeeTooltipImage.onerror = hideBrokenEmployeeImage;
+                    sharedEmployeeTooltipImage.setAttribute('src', imageUrl);
+                    return;
+                }
+
+                if (sharedEmployeeTooltipImage.complete && sharedEmployeeTooltipImage.naturalWidth > 0) {
+                    showLoadedEmployeeImage();
+                } else {
+                    hideBrokenEmployeeImage();
+                }
+            };
+
+            trigger.addEventListener('mouseenter', showEmployeeTooltip, { passive: true });
+            trigger.addEventListener('focus', showEmployeeTooltip, { passive: true });
+            trigger.addEventListener('mouseleave', () => {
+                sharedEmployeeTooltipImage.removeAttribute('src');
+                sharedEmployeeTooltipImage.style.display = 'none';
+                hideSharedTooltip(sharedEmployeeTooltip);
+            }, { passive: true });
+            trigger.addEventListener('blur', () => {
+                sharedEmployeeTooltipImage.removeAttribute('src');
+                sharedEmployeeTooltipImage.style.display = 'none';
+                hideSharedTooltip(sharedEmployeeTooltip);
+            }, { passive: true });
+        });
+
+        document.querySelectorAll('.calendar-vacation-note-trigger').forEach(trigger => {
+            const showVacationTooltip = () => {
+                const noteText = trigger.dataset.noteText || '';
+                if (!noteText) {
+                    hideSharedTooltip(sharedVacationTooltip);
+                    return;
+                }
+
+                sharedVacationTooltipNote.textContent = noteText;
+                positionSharedTooltip(trigger, sharedVacationTooltip);
+            };
+
+            trigger.addEventListener('mouseenter', showVacationTooltip, { passive: true });
+            trigger.addEventListener('focus', showVacationTooltip, { passive: true });
+            trigger.addEventListener('mouseleave', () => hideSharedTooltip(sharedVacationTooltip), { passive: true });
+            trigger.addEventListener('blur', () => hideSharedTooltip(sharedVacationTooltip), { passive: true });
+        });
+
+        window.addEventListener('scroll', function () {
+            hideSharedTooltip(sharedPunchTooltip);
+            hideSharedTooltip(sharedEmployeeTooltip);
+            hideSharedTooltip(sharedVacationTooltip);
+        }, { passive: true });
+
+        window.addEventListener('resize', function () {
+            hideSharedTooltip(sharedPunchTooltip);
+            hideSharedTooltip(sharedEmployeeTooltip);
+            hideSharedTooltip(sharedVacationTooltip);
+        }, { passive: true });
+
+        document.querySelectorAll('.calendar-holiday-marker[title]').forEach(marker => {
+            const tooltipText = marker.getAttribute('title');
+            if (!tooltipText) return;
+
+            const wrapper = document.createElement('span');
+            wrapper.className = 'calendar-holiday-marker-wrapper';
+            marker.parentNode.insertBefore(wrapper, marker);
+            wrapper.appendChild(marker);
+            marker.removeAttribute('title');
+
+            const tooltip = document.createElement('span');
+            tooltip.className = 'calendar-holiday-tooltip';
+            tooltip.textContent = tooltipText;
+            wrapper.appendChild(tooltip);
+        });
+
+        // Add Punch Modal
+        function openAddPunchModal(employeeId, date) {
+            document.getElementById('addEmployeeId').value = employeeId;
+            document.getElementById('addPunchDate').value = date;
+            document.getElementById('addPunchDateDisplay').value = new Date(date).toLocaleDateString();
+
+            var modal = new bootstrap.Modal(document.getElementById('addPunchModal'));
+            modal.show();
+        }
+
+        function openAddVacationModal(employeeId, date) {
+            document.getElementById('addVacationEmployeeId').value = employeeId;
+            document.getElementById('addVacationStartDate').value = date;
+            document.getElementById('addVacationEndDate').value = date;
+
+            var modal = new bootstrap.Modal(document.getElementById('addVacationModal'));
+            modal.show();
+        }
+
+        // Edit Punch Modal
+        function openEditPunchModal(punchId, date, time, type, note) {
+            document.getElementById('editPunchId').value = punchId;
+            document.getElementById('editPunchDate').value = date;
+            document.getElementById('editPunchDateDisplay').value = new Date(date).toLocaleDateString();
+            document.getElementById('editPunchTime').value = time;
+            document.getElementById('editPunchType').value = type;
+            document.getElementById('editPunchNote').value = note || '';
+
+            var modal = new bootstrap.Modal(document.getElementById('editPunchModal'));
+            modal.show();
+        }
+
+        // Delete Punch
+        function deletePunch(punchId) {
+            if (confirm('Are you sure you want to delete this punch?')) {
+                document.getElementById('deletePunchId').value = punchId;
+                document.getElementById('deletePunchForm').submit();
+            }
+        }
+
+        function deleteScheduleDay(scheduleId, date) {
+            if (confirm('Are you sure you want to delete only the schedule for this selected day?')) {
+                document.getElementById('deleteScheduleId').value = scheduleId;
+                document.getElementById('deleteScheduleDate').value = date;
+                document.getElementById('deleteScheduleDayForm').submit();
+            }
+        }
+    </script>
+}
+>>>>>>> master

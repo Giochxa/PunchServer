@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 @model PunchServerMVC.Models.ViewModels.EmployeeFilterViewModel
 
 @{
@@ -122,3 +123,220 @@
         window.addEventListener('DOMContentLoaded', filterDepartmentsByOrg);
     </script>
 }
+=======
+@model PunchServerMVC.Models.ViewModels.EmployeeFilterViewModel
+
+@{
+    ViewData["Title"] = "Employees";
+    var hideProfilePictures = (ViewBag.HideProfilePictures as bool?) ?? false;
+}
+
+<h2>Employees</h2>
+
+<style>
+    .inline-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        white-space: nowrap;
+    }
+
+    .employee-name-hover {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .employee-profile-tooltip {
+        position: absolute;
+        left: 100%;
+        top: 50%;
+        transform: translate(10px, -50%);
+        display: none;
+        z-index: 50;
+        background: #fff;
+        border: 1px solid rgba(0,0,0,.15);
+        border-radius: 8px;
+        padding: 8px;
+        box-shadow: 0 8px 20px rgba(0,0,0,.15);
+        min-width: 140px;
+    }
+
+    .employee-name-hover:hover .employee-profile-tooltip.has-loaded-image,
+    .employee-name-hover:focus-within .employee-profile-tooltip.has-loaded-image {
+        display: block;
+    }
+
+    .employee-profile-tooltip img {
+        display: block;
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 6px;
+        background: #f3f4f6;
+    }
+</style>
+
+<a class="btn btn-primary mb-3" href="/Employees/Create">Add New Employee</a>
+
+<form method="get" class="row g-2 mb-4">
+    <div class="col-md-3">
+        <input name="fullName" class="form-control" placeholder="Full Name"
+               value="@Model.FullName" />
+    </div>
+
+    <div class="col-md-3">
+        <input name="personalId" class="form-control" placeholder="Personal ID"
+               value="@Model.PersonalId" />
+    </div>
+
+    <div class="col-md-2">
+        <select name="organisationId" class="form-select" id="organisationFilter">
+            <option value="">All Organisations</option>
+            @foreach (var org in Model.Organisations)
+            {
+                <option value="@org.Id" selected="@(Model.OrganisationId == org.Id ? "selected" : null)">
+                    @org.Name
+                </option>
+            }
+        </select>
+    </div>
+
+    <div class="col-md-2">
+        <select name="departmentId" class="form-select" id="departmentFilter">
+            <option value="">All Departments</option>
+            @foreach (var dept in Model.Departments)
+            {
+                <option value="@dept.Id"
+                        data-org="@dept.OrganisationId"
+                        selected="@(Model.DepartmentId == dept.Id ? "selected" : null)">
+                    @dept.Name
+                </option>
+            }
+        </select>
+    </div>
+
+    <div class="col-md-2">
+        <select name="isActive" class="form-select">
+            <option value="">All Status</option>
+            <option value="true" selected="@(Model.IsActive == true ? "selected" : null)">Active</option>
+            <option value="false" selected="@(Model.IsActive == false ? "selected" : null)">Inactive</option>
+        </select>
+    </div>
+
+    <div class="col-md-12 text-end">
+        <button class="btn btn-outline-primary">Filter</button>
+        <a href="/Employees" class="btn btn-outline-secondary">Reset</a>
+    </div>
+</form>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Full Name</th>
+            <th>Unique ID</th>
+            <th>Personal ID</th>
+            <th>Organisation</th>
+            <th>Department</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var emp in Model.Employees)
+    {
+        <tr>
+            <td>
+                @if (!hideProfilePictures)
+                {
+                    var photoPath = Url.Action("ProfileImage", "Employees", new { id = emp.Id });
+                    <span class="employee-name-hover">
+                        <span>@emp.FullName</span>
+                        <span class="employee-profile-tooltip">
+                            <img
+                                alt="@emp.FullName profile picture"
+                                data-src="@photoPath"
+                                src="" />
+                        </span>
+                    </span>
+                }
+                else
+                {
+                    @emp.FullName
+                }
+            </td>
+            <td>@emp.UniqueId</td>
+            <td>@emp.PersonalId</td>
+            <td>@Model.Organisations.FirstOrDefault(o => o.Id == emp.OrganisationId)?.Name</td>
+            <td>@Model.Departments.FirstOrDefault(d => d.Id == emp.DepartmentId)?.Name</td>
+            <td>@(emp.IsActive ? "Active" : "Inactive")</td>
+            <td>
+                <span class="inline-actions">
+                    <a class="btn btn-sm btn-warning" href="/Employees/Edit/@emp.Id" title="Edit">✎</a>
+                    <a class="btn btn-sm btn-danger" href="/Employees/Delete/@emp.Id" title="Delete">🗑</a>
+                </span>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+@section Scripts {
+    <script>
+        const orgSelect = document.getElementById('organisationFilter');
+        const deptSelect = document.getElementById('departmentFilter');
+
+        function filterDepartmentsByOrg() {
+            const selectedOrg = orgSelect.value;
+            const options = deptSelect.options;
+
+            for (let i = 0; i < options.length; i++) {
+                const opt = options[i];
+                const orgId = opt.getAttribute('data-org');
+
+                if (!opt.value) continue; // Skip "All Departments"
+
+                if (!selectedOrg || orgId === selectedOrg) {
+                    opt.hidden = false;
+                } else {
+                    opt.hidden = true;
+                }
+            }
+
+            const selected = deptSelect.selectedOptions[0];
+            if (selected && selected.hidden) {
+                deptSelect.value = '';
+            }
+        }
+
+        function loadEmployeeProfileImage(event) {
+            const container = event.target.closest('.employee-name-hover');
+            if (!container) return;
+
+            const image = container.querySelector('img[data-src]');
+            if (!image || image.getAttribute('src')) return;
+
+            const tooltip = container.querySelector('.employee-profile-tooltip');
+            image.addEventListener('load', function () {
+                tooltip?.classList.add('has-loaded-image');
+            }, { once: true });
+            image.addEventListener('error', function () {
+                tooltip?.classList.remove('has-loaded-image');
+                image.removeAttribute('src');
+                image.removeAttribute('data-src');
+            });
+
+            const src = image.getAttribute('data-src');
+            if (src) {
+                image.setAttribute('src', src);
+            }
+        }
+
+        orgSelect.addEventListener('change', filterDepartmentsByOrg);
+        document.addEventListener('mouseover', loadEmployeeProfileImage);
+        document.addEventListener('focusin', loadEmployeeProfileImage);
+        window.addEventListener('DOMContentLoaded', filterDepartmentsByOrg);
+    </script>
+}
+>>>>>>> master

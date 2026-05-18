@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 @model PunchServerMVC.Models.ViewModels.WorkSheetViewModel
 
 @{
@@ -236,3 +237,1059 @@
     </tr>
 
 </table>
+=======
+@model PunchServerMVC.Models.ViewModels.WorkSheetViewModel
+
+@{
+    var isEmbedded = (ViewBag.IsEmbedded as bool?) ?? false;
+    Layout = isEmbedded ? null : "_Layout";
+}
+<script>
+    document.documentElement.lang = "ka";
+</script>
+
+
+@{
+    const int MaxDays = 31;
+    var daysInMonth = DateTime.DaysInMonth(Model.Year, Model.Month);
+
+    // Lists from controller
+    var organisations = ViewBag.Organisations as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+    var departments = ViewBag.Departments as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+
+    int? selectedOrgId = ViewBag.SelectedOrganisationId as int?;
+    int? selectedDeptId = ViewBag.SelectedDepartmentId as int?;
+
+    var monthValue = $"{Model.Year:D4}-{Model.Month:D2}";
+    ViewData["Title"] = "Work Sheet";
+
+    string GetStatus(IReadOnlyList<PunchServerMVC.Models.ViewModels.WorkSheetDayEntry> entries, int day)
+    {
+        if (day < 1 || day > MaxDays) return "";
+        if (day > daysInMonth) return "";
+        var e = entries.FirstOrDefault(x => x.Day == day);
+        return e?.Status ?? "";
+    }
+}
+
+<style>
+    :root {
+        --b:#000;
+        --thin:1px;
+        --thick:2px;
+        --font:"Calibri","Arial",sans-serif;
+
+        --btn-radius: 10px;
+        --btn-shadow: 0 1px 0 rgba(0,0,0,.12), 0 6px 18px rgba(0,0,0,.08);
+        --btn-border: 1px solid rgba(0,0,0,.18);
+    }
+
+    body { font-family: var(--font); padding:@(isEmbedded ? "0" : "10px"); margin:0; font-size:11px; color:#000; overflow-x:hidden; }
+
+    /* PRINT ONLY WORKSHEET AREA (no site footer/navbar/layout) */
+    @@media print {
+        body * { visibility: hidden !important; }
+        #print-area, #print-area * { visibility: visible !important; }
+        html, body { margin: 0 !important; padding: 0 !important; overflow: visible !important; }
+        #worksheet-scale-wrap, #worksheet-scale-target {
+            overflow: visible !important;
+            width: auto !important;
+            height: auto !important;
+            transform: none !important;
+            display: block !important;
+        }
+        #print-area {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            transform: none !important;
+        }
+        @@page { size: A4 landscape; margin: 10mm; }
+    }
+
+    .no-print { margin-bottom: 10px; display:flex; gap:10px; align-items:end; flex-wrap:wrap; }
+    .no-print label { font-size: 12px; font-weight: 600; color:#111; }
+    .no-print select, .no-print input {
+        padding:8px 10px;
+        min-width: 220px;
+        border: 1px solid rgba(0,0,0,.18);
+        border-radius: 10px;
+        outline: none;
+        background: #fff;
+        box-shadow: 0 1px 0 rgba(0,0,0,.06);
+    }
+
+    .btn {
+        padding:8px 14px;
+        border: var(--btn-border);
+        border-radius: var(--btn-radius);
+        cursor:pointer;
+        font-weight: 700;
+        box-shadow: var(--btn-shadow);
+        transition: transform .06s ease, filter .12s ease;
+        user-select:none;
+        background:#fff;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn:hover { filter: brightness(0.98); }
+
+    .btn-apply {
+        background: #1f6feb;
+        color: #fff;
+        border-color: rgba(31,111,235,.55);
+    }
+    .btn-print {
+        background: #808080;
+        color: #fff;
+        border-color: rgba(128,128,128,.55);
+    }
+    .btn-export {
+        background: #16a34a;
+        color: #fff;
+        border-color: rgba(22,163,74,.55);
+    }
+
+    .top-title { position: relative; text-align:center; margin-bottom:4px; }
+    .top-title .attachment { position:absolute; right:0; top:0; font-weight:700; font-size:13px; letter-spacing:4px; }
+    .top-title h1 { margin:0; font-size:18px; font-weight:700; letter-spacing:8px; }
+    .top-title .sub { font-size:11px; margin-top:2px; }
+
+    .worksheet-header { margin-bottom:8px; font-size:9px; }
+    .worksheet-header .named-line {
+        text-align: center;
+        margin-top: 4px;
+        line-height:1.1;
+    }
+    .worksheet-header .named-line .value {
+        font-weight:700;
+        min-height: 10px;
+    }
+    .worksheet-header .named-line .line {
+        display:block;
+        width:100%;
+        min-width:0;
+        height:4px;
+        border-bottom: var(--thin) solid var(--b);
+    }
+    .worksheet-header .named-line .label {
+        margin-top: 2px;
+        line-height:1;
+    }
+    .worksheet-header .bottom-row {
+        display:grid;
+        grid-template-columns: 240px 1fr 240px;
+        align-items:start;
+        gap:16px;
+        margin-top:2px;
+    }
+    .worksheet-header .id-box {
+        display:grid;
+        grid-template-columns: 92px 1fr;
+        border: var(--thin) solid var(--b);
+        min-height:30px;
+    }
+    .worksheet-header .id-box .label {
+        border-right: var(--thin) solid var(--b);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        text-align:center;
+        font-weight:700;
+        line-height:1.05;
+    }
+    .worksheet-header .id-box .value {
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding:0 8px;
+        font-weight:700;
+        text-align:center;
+    }
+    .worksheet-header .right-date-grid {
+        width:100%;
+        height:66px;
+        border-collapse:collapse;
+        table-layout:fixed;
+    }
+    .worksheet-header .right-date-grid col.date-col { width:74px; }
+    .worksheet-header .right-date-grid tr:nth-child(1) { height:27px; }
+    .worksheet-header .right-date-grid tr:nth-child(2) { height:17px; }
+    .worksheet-header .right-date-grid tr:nth-child(3) { height:22px; }
+    .worksheet-header .right-date-grid td {
+        border: var(--thin) solid var(--b);
+        text-align:center;
+        vertical-align:middle;
+        padding:2px;
+        font-weight:700;
+        font-size:9px;
+        line-height:1.05;
+    }
+    .worksheet-header .right-date-grid .date-value,
+    .worksheet-header .right-date-grid .period-value {
+        font-size: 12px;
+    }
+
+    table.t12 { width:100%; border-collapse:collapse; table-layout:fixed; font-size:8px; }
+    table.t12 th, table.t12 td {
+        border: var(--thin) solid var(--b);
+        text-align:center;
+        padding:1px;
+        height:18px;
+        line-height:1.05;
+        word-break: break-word;
+    }
+
+    col.c1 { width: 28px; }
+    col.c2 { width: 220px; }
+    col.c3 { width: 70px; }
+    col.day { width: 18px; }
+    col.sum { width: 38px; }
+    col.r { width: 38px; }
+
+    .thin-left { border-left: var(--thin) solid var(--b) !important; }
+    .left { text-align:left !important; padding-left:3px !important; }
+
+    .namepos {
+        padding: 0 !important;
+    }
+
+    .namepos .split {
+        display: flex;
+        height: 100%;
+    }
+
+    .namepos .nm,
+    .namepos .pos {
+        flex: 1;
+        padding: 2px 4px;
+        display: flex;
+        align-items: center;
+    }
+
+    .namepos .pos {
+        border-left: 1px solid #000;
+    }
+    /* col 19 header: horizontal + NO wrap */
+    .sig-head {
+        white-space: nowrap !important;
+        word-break: normal !important;
+    }
+
+    /* col 20 header: horizontal + wrapped text allowed */
+    .seq-head {
+        white-space: normal !important;
+    }
+
+    .vtext {
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+        white-space: nowrap;
+        padding: 6px 2px !important;
+    }
+
+    .footer {
+        margin-top: 22px;
+        font-size: 11px;
+        width: 100%;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 18px;
+        white-space: nowrap;
+    }
+    .footer .footer-party {
+        display: grid;
+        grid-template-columns: auto auto auto;
+        column-gap: 18px;
+        align-items: start;
+    }
+    .footer .footer-left { min-width: 360px; }
+    .footer .footer-head { min-width: 560px; }
+    .footer .block-title {
+        font-weight:700;
+        line-height:1.15;
+        min-width: 110px;
+    }
+    .footer .sign-field {
+        text-align:center;
+        padding-top: 12px;
+        min-width: 130px;
+    }
+    .footer .sign-line {
+        display:block;
+        border-bottom:1px solid #000;
+        height: 12px;
+        min-width: 130px;
+    }
+    .footer .sign-label {
+        display:block;
+        font-size:9px;
+        line-height:1.1;
+        margin-top:2px;
+    }
+    .line { display:inline-block; min-width: 220px; border-bottom:1px solid #000; height: 14px; vertical-align:bottom; }
+    .footer-bottom {
+        margin-top: 14px;
+        display:flex;
+        align-items:center;
+        justify-content:flex-end;
+        gap: 6px;
+        font-size: 11px;
+        min-width: 210px;
+    }
+    .footer-bottom .date-line {
+        display:inline-block;
+        min-width: 64px;
+        border-bottom:1px solid #000;
+        height: 12px;
+    }
+
+    /* hidden table used only for Excel export */
+    #export-composite { display:none; }
+
+    #worksheet-scale-wrap {
+        width: 100%;
+        overflow: hidden;
+    }
+
+    #worksheet-scale-target {
+        display: inline-block;
+        transform-origin: top left;
+    }
+</style>
+
+<form class="no-print" method="get" asp-action="WorkSheet" asp-controller="Home">
+    @if (isEmbedded)
+    {
+        <input type="hidden" name="embedded" value="true" />
+    }
+
+    <div>
+        <label>Organisation</label><br />
+        <select name="organisationId">
+            @foreach (var o in organisations)
+            {
+                <option value="@o.Id" selected="@((selectedOrgId != null && (int)o.Id == selectedOrgId.Value) ? "selected" : null)">
+                    @o.Name
+                </option>
+            }
+        </select>
+    </div>
+
+    <div>
+        <label>Department</label><br />
+        <select name="departmentId">
+            <option value="" selected="@(selectedDeptId == null ? "selected" : null)">-- All --</option>
+            @foreach (var d in departments)
+            {
+                <option value="@d.Id" selected="@((selectedDeptId != null && (int)d.Id == selectedDeptId.Value) ? "selected" : null)">
+                    @d.Name
+                </option>
+            }
+        </select>
+    </div>
+
+    <div>
+        <label>Month</label><br />
+        <input type="month" name="monthValue" value="@monthValue" />
+    </div>
+
+    <div style="display:flex; gap:10px;">
+        <button class="btn btn-apply" type="submit">Apply</button>
+        <button class="btn btn-print" type="button" onclick="window.print()">Print</button>
+
+        @if (Model.EmployeeSheets?.Any() == true)
+        {
+            <button class="btn btn-export" type="button" id="exportWorksheetBtn">Export to Excel</button>
+        }
+    </div>
+</form>
+
+@if (Model.EmployeeSheets?.Any() == true)
+{
+    <!-- xlsx-js-style: supports cell borders/alignment/bold etc in browser -->
+    <script defer src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+    <script>
+        window.addEventListener('load', function () {
+            // 47 columns total:
+            // 3 fixed + 33 day area + 6 totals + 4 absence + 1 weekend = 47
+            var TOTAL_COLS = 50;
+
+            function td(text, colspan, rowspan) {
+                var cell = document.createElement('td');
+                cell.textContent = text || '';
+                if (colspan && colspan > 1) cell.colSpan = colspan;
+                if (rowspan && rowspan > 1) cell.rowSpan = rowspan;
+                return cell;
+            }
+
+            function tr(cells) {
+                var row = document.createElement('tr');
+                cells.forEach(function (c) { row.appendChild(c); });
+                return row;
+            }
+
+            function createCompositeExportTable() {
+                // remove any old composite table
+                var old = document.getElementById('export-composite');
+                if (old) old.remove();
+
+                var table = document.createElement('table');
+                table.id = 'export-composite';
+
+                // --- Title area ---
+                table.appendChild(tr([
+                    td('', TOTAL_COLS - 7, 1),
+                    td('დანართი N2', 7, 1)
+                ]));
+
+                table.appendChild(tr([
+                    td('სამუშაო დროის აღრიცხვის ფორმა', TOTAL_COLS, 1)
+                ]));
+
+                // spacer
+                table.appendChild(tr([ td('', TOTAL_COLS, 1) ]));
+
+                // --- Header block ---
+                var LEFT = 30;
+                var RIGHT = TOTAL_COLS - LEFT;
+
+                table.appendChild(tr([
+                    td('ორგანიზაციის დასახელება', 8, 1),
+                    td('@(Model.OrganisationName ?? "")', LEFT - 8, 1),
+                    td('შედგენის თარიღი', RIGHT, 1)
+                ]));
+
+                table.appendChild(tr([
+                    td('საიდენტიფიკაციო კოდი', 8, 1),
+                    td('@(Model.IdentificationCode ?? "")', LEFT - 8, 1),
+                    td('@Model.FormDate.ToString("dd.MM.yyyy")', RIGHT, 1)
+                ]));
+
+                table.appendChild(tr([
+                    td('', LEFT, 1),
+                    td('საანგარიშო პერიოდი', RIGHT, 1)
+                ]));
+
+                table.appendChild(tr([
+                    td('', LEFT, 1),
+                    td('@Model.PeriodStart.ToString("dd.MM.yyyy") - @Model.PeriodEnd.ToString("dd.MM.yyyy")', RIGHT, 1)
+                ]));
+
+                // spacer
+                table.appendChild(tr([ td('', TOTAL_COLS, 1) ]));
+
+                // --- Main worksheet table (clone printed table) ---
+                var source = document.querySelector('#print-area table.t12');
+if (source) {
+    // clone the whole table so we can transform it for Excel
+    var cloned = source.cloneNode(true);
+
+    // 1) Header: make the "Name/Position" header cell span 2 columns in export
+    // This keeps titles unchanged visually, but aligns with extra Position column in Excel.
+    var headRow1 = cloned.tHead && cloned.tHead.rows && cloned.tHead.rows[0];
+    if (headRow1 && headRow1.cells && headRow1.cells.length >= 2) {
+        // The 2nd header cell is the big "გვარი, სახელი, თანამდებობა..." column
+        headRow1.cells[1].colSpan = 2;
+    }
+
+    // 2) Numbering row: make the "2" cell span 2 columns in export (no renumbering)
+    // This is the last header row in your thead (the one that contains 1..18..19..20)
+    var theadRows = cloned.tHead ? cloned.tHead.rows : null;
+    if (theadRows && theadRows.length) {
+        var lastHeadRow = theadRows[theadRows.length - 1];
+        // It starts with: 1,2,3,...
+        if (lastHeadRow && lastHeadRow.cells && lastHeadRow.cells.length >= 2) {
+            lastHeadRow.cells[1].colSpan = 2; // "2" spans Name + Position in Excel
+        }
+    }
+
+    // 3) Body: split the single Name/Position td into TWO td cells for Excel
+    var bodyRows = cloned.tBodies && cloned.tBodies[0] ? cloned.tBodies[0].rows : [];
+    Array.prototype.forEach.call(bodyRows, function (row) {
+        var nameTd = row.querySelector('td.namepos');
+        if (!nameTd) return;
+
+        var nm = nameTd.querySelector('.nm');
+        var pos = nameTd.querySelector('.pos');
+
+        var nameText = nm ? nm.textContent.trim() : nameTd.textContent.trim();
+        var posText = pos ? pos.textContent.trim() : "";
+
+        // Replace content in original td with FullName only
+        nameTd.textContent = nameText;
+
+        // Insert new td right after with Position
+        var posTd = document.createElement('td');
+        posTd.textContent = posText;
+        posTd.className = "left"; // keeps consistent left alignment
+        row.insertBefore(posTd, nameTd.nextSibling);
+    });
+
+    // Append transformed rows into export composite table
+    cloned.querySelectorAll('tr').forEach(function (r) {
+        table.appendChild(r.cloneNode(true));
+    });
+}
+
+
+                // spacer
+                table.appendChild(tr([ td('', TOTAL_COLS, 1) ]));
+
+                // --- Footer ---
+                table.appendChild(tr([
+                    td('პასუხისმგებელი პირი', 16, 1),
+                    td('ორგანიზაციის/სტრუქტურული ერთეულის ხელმძღვანელი', 16, 1),
+                    td('', TOTAL_COLS - 32, 1)
+                ]));
+
+                table.appendChild(tr([
+                    td('თანამდებობა ___________________________', 16, 1),
+                    td('თანამდებობა ___________________________', 16, 1),
+                    td('« ____ » ____________________ 20____ წ.', TOTAL_COLS - 32, 1)
+                ]));
+
+                table.appendChild(tr([
+                    td('ხელმოწერა ______________________________', 16, 1),
+                    td('ხელმოწერა ______________________________', 16, 1),
+                    td('', TOTAL_COLS - 32, 1)
+                ]));
+
+                document.body.appendChild(table);
+                return table;
+            }
+
+            // Create empty cells for full range so borders apply even on blanks
+            function ensureAllCellsExist(ws) {
+                var range = XLSX.utils.decode_range(ws["!ref"]);
+                for (var r = range.s.r; r <= range.e.r; r++) {
+                    for (var c = range.s.c; c <= range.e.c; c++) {
+                        var addr = XLSX.utils.encode_cell({ r: r, c: c });
+                        if (!ws[addr]) {
+                            ws[addr] = { t: "s", v: "" };
+                        }
+                    }
+                }
+            }
+
+            // Auto-fit column widths based on max text length in each column
+            function autoFitCols(ws, maxWidth) {
+                maxWidth = maxWidth || 60;
+                var range = XLSX.utils.decode_range(ws["!ref"]);
+                var cols = [];
+
+                for (var c = range.s.c; c <= range.e.c; c++) {
+                    var maxLen = 0;
+
+                    for (var r = range.s.r; r <= range.e.r; r++) {
+                        var addr = XLSX.utils.encode_cell({ r: r, c: c });
+                        var cell = ws[addr];
+                        var v = (cell && cell.v != null) ? String(cell.v) : "";
+
+                        var longestLine = v.split("\n").reduce(function (m, s) {
+                            return Math.max(m, s.length);
+                        }, 0);
+
+                        if (longestLine > maxLen) maxLen = longestLine;
+                    }
+
+                    var wch = Math.max(3, Math.min(maxWidth, maxLen + 2));
+                    cols.push({ wch: wch });
+                }
+
+                ws["!cols"] = cols;
+                // Force wider column for signature (col 19 = second last column)
+                 var sigIndex = cols.length - 2;  // 19th column
+                if (cols[sigIndex]) {
+                cols[sigIndex].wch = 22;   // wider signature column
+                }
+
+            }
+
+            // Row height is not true auto-fit in XLSX; set good defaults for wrap
+            function setRowHeights(ws) {
+                var range = XLSX.utils.decode_range(ws["!ref"]);
+                var rows = [];
+
+                for (var r = range.s.r; r <= range.e.r; r++) {
+                    rows.push({ hpt: 15 });
+                }
+
+                if (rows.length > 2) rows[1] = { hpt: 22 }; // title row
+                ws["!rows"] = rows;
+            }
+
+            function applySheetStyles(ws) {
+                ensureAllCellsExist(ws);
+
+                var range = XLSX.utils.decode_range(ws["!ref"]);
+                var thin = { style: "thin", color: { rgb: "000000" } };
+
+                var baseStyle = {
+                    border: { top: thin, bottom: thin, left: thin, right: thin },
+                    alignment: { vertical: "center", horizontal: "center", wrapText: true },
+                    font: { name: "Calibri", sz: 10, color: { rgb: "000000" } }
+                };
+
+                // Apply borders + alignment to ALL cells (including empty ones)
+                for (var r = range.s.r; r <= range.e.r; r++) {
+                    for (var c = range.s.c; c <= range.e.c; c++) {
+                        var addr = XLSX.utils.encode_cell({ r: r, c: c });
+                        ws[addr].s = JSON.parse(JSON.stringify(baseStyle));
+                    }
+                }
+
+        /// Bold only header rows (stop before first employee row)
+        var firstDataRow = null;
+
+        // Detect first employee row by finding first numeric value in column A
+        for (var r = range.s.r; r <= range.e.r; r++) {
+        var addr = XLSX.utils.encode_cell({ r: r, c: 0 }); // column A
+        var cell = ws[addr];
+        if (cell && !isNaN(cell.v) && Number(cell.v) === 1) {
+        firstDataRow = r;
+        break;
+        }
+        }
+
+        if (firstDataRow !== null) {
+        for (var r2 = range.s.r; r2 < firstDataRow; r2++) {
+        for (var c2 = range.s.c; c2 <= range.e.c; c2++) {
+        var a2 = XLSX.utils.encode_cell({ r: r2, c: c2 });
+        if (ws[a2] && ws[a2].s && ws[a2].s.font) {
+        ws[a2].s.font.bold = true;
+        }
+        }
+        }
+        }
+
+
+
+                // Left-align Full Name column (index 1)
+                for (var r3 = range.s.r; r3 <= range.e.r; r3++) {
+                    var a3 = XLSX.utils.encode_cell({ r: r3, c: 1 });
+                    ws[a3].s.alignment.horizontal = "left";
+                }
+
+                // Force Tab Number/Personal ID column to text (index 2)
+                for (var r4 = range.s.r; r4 <= range.e.r; r4++) {
+                    var idAddr = XLSX.utils.encode_cell({ r: r4, c: 2 });
+                    ws[idAddr].t = "s";
+                }
+
+                // Title row bigger font (row index 1)
+                for (var c4 = range.s.c; c4 <= range.e.c; c4++) {
+                    var tAddr = XLSX.utils.encode_cell({ r: 1, c: c4 });
+                    ws[tAddr].s.font.sz = 14;
+                    ws[tAddr].s.font.bold = true;
+                    ws[tAddr].s.alignment.horizontal = "center";
+                }
+                // --- Column 19 (signature) should NOT wrap in Excel ---
+                // last two columns are: signature = e.c - 1, serial = e.c
+                var lastCol = range.e.c;
+var sigCol = lastCol - 1;
+
+for (var r5 = range.s.r; r5 <= range.e.r; r5++) {
+    var sigAddr = XLSX.utils.encode_cell({ r: r5, c: sigCol });
+    ws[sigAddr].s.alignment.wrapText = false;
+}
+
+
+                setRowHeights(ws);
+            }
+
+            var btn = document.getElementById('exportWorksheetBtn');
+            if (!btn) return;
+
+            btn.addEventListener('click', function () {
+                var exportTable = createCompositeExportTable();
+                if (!exportTable) return;
+
+                var ws = XLSX.utils.table_to_sheet(exportTable, { raw: true });
+
+                applySheetStyles(ws);
+                @* autoFitCols(ws, 60); *@
+
+                // 1) Center the big header title cell in Excel
+var titleCell = findCellAddressByContains(ws, "გვარი, სახელი, თანამდებობა");
+if (titleCell && ws[titleCell.addr] && ws[titleCell.addr].s) {
+    ws[titleCell.addr].s.alignment.horizontal = "center";
+}
+
+// 2) Center the "2" numbering cell in Excel (the merged one)
+var numRow = findNumberingRow(ws);
+if (numRow != null) {
+    var twoAddr = XLSX.utils.encode_cell({ r: numRow, c: 1 }); // column B
+    if (ws[twoAddr] && ws[twoAddr].s) {
+        ws[twoAddr].s.alignment.horizontal = "center";
+    }
+}
+
+// 3) Auto-fit ONLY: FullName (B), Position (C), TabNumber (D)
+autoFitOnlyCols(ws, [1, 2, 3], 60);
+
+// 4) Keep signature column (19) wider (still only affects that column)
+var range = XLSX.utils.decode_range(ws["!ref"]);
+var lastCol = range.e.c;      // last column = "20"
+var sigCol = lastCol - 1;     // column "19"
+ws["!cols"] = ws["!cols"] || [];
+ws["!cols"][sigCol] = { wch: 22 };
+
+
+                function findCellAddressByContains(ws, textPart) {
+    var range = XLSX.utils.decode_range(ws["!ref"]);
+    for (var r = range.s.r; r <= range.e.r; r++) {
+        for (var c = range.s.c; c <= range.e.c; c++) {
+            var addr = XLSX.utils.encode_cell({ r: r, c: c });
+            var cell = ws[addr];
+            if (!cell || cell.v == null) continue;
+            var v = String(cell.v);
+            if (v.indexOf(textPart) !== -1) return { r: r, c: c, addr: addr };
+        }
+    }
+    return null;
+}
+
+function findNumberingRow(ws) {
+    // We detect the header numbering row by pattern:
+    // A = "1", B = "2", D = "3"
+    // (Because "2" spans Name+Position so C is merged/blank in sheet)
+    var range = XLSX.utils.decode_range(ws["!ref"]);
+    for (var r = range.s.r; r <= range.e.r; r++) {
+        var a = ws[XLSX.utils.encode_cell({ r: r, c: 0 })];
+        var b = ws[XLSX.utils.encode_cell({ r: r, c: 1 })];
+        var d = ws[XLSX.utils.encode_cell({ r: r, c: 3 })];
+        if (a && b && d && String(a.v) === "1" && String(b.v) === "2" && String(d.v) === "3") {
+            return r;
+        }
+    }
+    return null;
+}
+
+function autoFitOnlyCols(ws, colIndexes, maxWidth) {
+    maxWidth = maxWidth || 60;
+    var range = XLSX.utils.decode_range(ws["!ref"]);
+    ws["!cols"] = ws["!cols"] || [];
+
+    colIndexes.forEach(function (c) {
+        var maxLen = 0;
+
+        for (var r = range.s.r; r <= range.e.r; r++) {
+            var addr = XLSX.utils.encode_cell({ r: r, c: c });
+            var cell = ws[addr];
+            var v = (cell && cell.v != null) ? String(cell.v) : "";
+            var longestLine = v.split("\n").reduce(function (m, s) { return Math.max(m, s.length); }, 0);
+            if (longestLine > maxLen) maxLen = longestLine;
+        }
+
+        // +2 padding, with reasonable minimum
+        var wch = Math.max(8, Math.min(maxWidth, maxLen + 2));
+        ws["!cols"][c] = { wch: wch };
+    });
+}
+
+
+                // Keep default widths for all columns, but make column 19 (signature) wider
+var range = XLSX.utils.decode_range(ws["!ref"]);
+var lastCol = range.e.c;          // last column index (20)
+var sigCol = lastCol - 1;         // column 19 = second last
+
+ws["!cols"] = ws["!cols"] || [];
+ws["!cols"][sigCol] = { wch: 22 };   // adjust (e.g. 26) if you want wider
+
+
+                var wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'WorkSheet');
+
+                var y = '@Model.Year';
+                var m = ('0' + '@Model.Month').slice(-2);
+                XLSX.writeFile(wb, 'WorkSheet_' + y + '_' + m + '.xlsx');
+            });
+        });
+    </script>
+}
+
+<div id="worksheet-scale-wrap">
+<div id="worksheet-scale-target">
+<div id="print-area">
+
+    <div class="top-title">
+        <div class="attachment">დანართი N2</div>
+        <h1>სამუშაო დროის აღრიცხვის ფორმა</h1>
+        <div class="sub"></div>
+    </div>
+
+    <div class="worksheet-header">
+        <div class="named-line">
+            <div class="value">@Model.OrganisationName</div>
+            <span class="line"></span>
+            <div class="label">ორგანიზაციის დასახელება</div>
+        </div>
+        <div class="named-line">
+            <div class="value">@(string.IsNullOrWhiteSpace(Model.Department) ? "-" : Model.Department)</div>
+            <span class="line"></span>
+            <div class="label">სტრუქტურული ერთეული</div>
+        </div>
+        <div class="bottom-row">
+            <div class="id-box">
+                <div class="label">საიდენტიფიკაციო<br />კოდი</div>
+                <div class="value">@Model.IdentificationCode</div>
+            </div>
+            <div></div>
+            <table class="right-date-grid">
+                <colgroup>
+                    <col class="date-col" />
+                    <col />
+                    <col />
+                </colgroup>
+                <tr>
+                    <td rowspan="2">შედგენის<br />თარიღი</td>
+                    <td colspan="2">საანგარიშო პერიოდი</td>
+                </tr>
+                <tr>
+                    <td>-დან</td>
+                    <td>-მდე</td>
+                </tr>
+                <tr>
+                    <td class="date-value">@Model.FormDate.ToString("dd.MM.yyyy")</td>
+                    <td class="period-value">@Model.PeriodStart.ToString("dd.MM.yyyy")</td>
+                    <td class="period-value">@Model.PeriodEnd.ToString("dd.MM.yyyy")</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <table class="t12">
+        <colgroup>
+            <col class="c1" />
+            <col class="c2" />
+            <col class="c3" />
+            @for (int i = 1; i <= 15; i++) { <col class="day" /> }
+            <col class="sum" />
+            @for (int i = 16; i <= 31; i++) { <col class="day" /> }
+            <col class="sum" />
+            @for (int i = 1; i <= 11; i++) { <col class="r" /> }
+            <col style="width:120px;" />  <!-- 19 ხელმოწერა -->
+            <col class="r" /> <!-- 20 რიგითი N -->
+        </colgroup>
+
+        <thead>
+            <tr>
+                <th rowspan="4">რიგითი<br />N</th>
+                <th rowspan="4">გვარი, სახელი, თანამდებობა<br />(სპეციალობა, პროფესია)</th>
+                <th rowspan="4">ტაბელის ნომერი/<br />პირადი ნომერი</th>
+
+                <th colspan="33" class="thick-left">
+                    აღნიშვნები სამუშაოზე გამოცხადების/არგამოცხადების შესახებ თარიღების მიხედვით თვის განმავლობაში
+                </th>
+
+                <th colspan="6" class="thick-left">სულ ნამუშევარი თვის განმავლობაში</th>
+                <th colspan="4" class="thick-left">არგამოცხადების დღეების, საათების რ-ბა</th>
+
+                <th rowspan="4" class="thick-left vtext">
+                    დასვენების,<br />უქმე დღეების<br />რ-ბა
+                </th>
+                <th rowspan="4" class="thick-left sig-head">ხელმოწერა</th>
+                <th rowspan="4" class="seq-head">რიგითი N</th>
+            </tr>
+
+            <tr>
+                @for (int d = 1; d <= 15; d++)
+                {
+                    <th rowspan="3" class="@(d == 1 ? "thick-left" : "")">@d</th>
+                }
+                <th rowspan="3" class="thick-left">სულ ნამუშევარი სთ.<br />თვის I ნახევარში</th>
+
+                @for (int d = 16; d <= 30; d++)
+                {
+                    <th rowspan="3">@d</th>
+                }
+                <th rowspan="3">31</th>
+                <th rowspan="3" class="thick-left">სულ ნამუშევარი სთ.<br />თვის II ნახევარში</th>
+
+                <th class="thick-left" rowspan="3">დღე</th>
+                <th colspan="5">საათი</th>
+                <th class="thick-left" colspan="4">მათ შორის</th>
+            </tr>
+
+            <tr>
+                <th rowspan="2">ჯამი</th>
+                <th colspan="4">მათ შორის</th>
+
+                <th class="thick-left" rowspan="2">ს/ფ</th>
+                <th rowspan="2">შვებულება</th>
+                <th rowspan="2">უხ. შვებულება</th>
+                <th rowspan="2">სხვა</th>
+            </tr>
+
+            <tr>
+                <th>ზეგანაკვე-თური</th>
+                <th>ღამე</th>
+                <th>დასვენების,<br />უქმე დღეები</th>
+                <th>სხვა</th>
+            </tr>
+
+            <tr>
+                <th>1</th><th>2</th><th>3</th>
+                <th colspan="15" class="thick-left">4</th>
+                <th class="thick-left">5</th>
+                <th colspan="16">6</th>
+                <th class="thick-left">7</th>
+
+                <th class="thick-left">8</th>
+                <th>9</th><th>10</th><th>11</th><th>12</th><th>13</th>
+
+                <th class="thick-left">14</th>
+                <th>15</th><th>16</th><th>17</th>
+
+                <th class="thick-left">18</th>
+                <th class="thick-left">19</th>
+                <th>20</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @{ int idx = 1; }
+            @foreach (var emp in Model.EmployeeSheets)
+            {
+                <tr>
+                    <td>@idx</td>
+                    <td class="left namepos">
+                        <div class="split">
+                            <span class="nm">@emp.FullName</span>
+                            <span class="pos">@(emp.Position ?? "")</span>
+                        </div>
+                    </td>
+                    <td>@emp.TabNumber</td>
+
+                    @for (int d = 1; d <= 15; d++)
+                    {
+                        <td class="@(d == 1 ? "thick-left" : "")">@GetStatus(emp.DailyEntries, d)</td>
+                    }
+
+                    <td class="thick-left">@emp.WorkedHoursFirstHalf</td>
+
+                    @for (int d = 16; d <= 31; d++)
+                    {
+                        <td>@GetStatus(emp.DailyEntries, d)</td>
+                    }
+
+                    <td class="thick-left">@emp.WorkedHoursSecondHalf</td>
+
+                    <td class="thick-left">@emp.TotalWorkedDays</td>
+
+                    <td>@emp.TotalWorkedHours</td>
+                    <td>@emp.OvertimeHours</td>
+                    <td>@emp.NightHours</td>
+                    <td>@emp.WeekendWorkedHours</td>
+                    <td>@emp.OtherHours</td>
+
+                    <td class="thick-left">@emp.BusinessTripHours</td>
+                    <td>@emp.PaidLeaveHours</td>
+                    <td>@emp.UnpaidLeaveHours</td>
+                    <td>@emp.OtherAbsenceHours</td>
+
+                    <td class="thick-left">@emp.WeekendDays</td>
+                    <td class="thick-left"></td>   <!-- 19 ხელმოწერა -->
+                    <td>@idx</td>                  <!-- 20 რიგითი N -->
+                </tr>
+                idx++;
+            }
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <div class="footer-party footer-left">
+            <div class="block-title">პასუხისმგებელი<br />პირი</div>
+            <div class="sign-field">
+                <span class="sign-line"></span>
+                <span class="sign-label">თანამდებობა</span>
+            </div>
+            <div class="sign-field">
+                <span class="sign-line"></span>
+                <span class="sign-label">ხელმოწერა</span>
+            </div>
+        </div>
+
+        <div class="footer-party footer-head">
+            <div class="block-title">ორგანიზაციის/სტრუქტურული<br />ერთეულის ხელმძღვანელი</div>
+            <div class="sign-field">
+                <span class="sign-line"></span>
+                <span class="sign-label">თანამდებობა</span>
+            </div>
+            <div class="sign-field">
+                <span class="sign-line"></span>
+                <span class="sign-label">ხელმოწერა</span>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <span>«</span><span>»</span>
+            <span class="date-line"></span>
+            <span>20</span><span class="date-line" style="min-width:24px;"></span><span>წ.</span>
+        </div>
+    </div>
+</div>
+</div>
+</div>
+
+@if (isEmbedded)
+{
+    <script>
+        (function () {
+            const wrap = document.getElementById('worksheet-scale-wrap');
+            const target = document.getElementById('worksheet-scale-target');
+            const printArea = document.getElementById('print-area');
+            if (!wrap || !target || !printArea) return;
+
+            function applyScale() {
+                target.style.transform = 'none';
+                target.style.width = '';
+
+                const naturalWidth = Math.max(
+                    printArea.scrollWidth || 0,
+                    printArea.offsetWidth || 0,
+                    Math.ceil(printArea.getBoundingClientRect().width || 0));
+
+                const naturalHeight = Math.max(
+                    printArea.scrollHeight || 0,
+                    printArea.offsetHeight || 0,
+                    Math.ceil(printArea.getBoundingClientRect().height || 0));
+
+                if (naturalWidth < 300 || naturalHeight < 300) {
+                    wrap.style.height = '1800px';
+                    if (window.parent && window.parent !== window) {
+                        window.parent.postMessage({
+                            type: 'worksheetHeight',
+                            height: 1824
+                        }, '*');
+                    }
+                    return;
+                }
+
+                const availableWidth = wrap.clientWidth || window.innerWidth || naturalWidth;
+                const scale = Math.min(1, availableWidth / naturalWidth);
+
+                target.style.width = `${naturalWidth}px`;
+                target.style.transform = `scale(${scale})`;
+
+                const scaledHeight = Math.ceil(naturalHeight * scale);
+                wrap.style.height = `${scaledHeight}px`;
+
+                if (window.parent && window.parent !== window) {
+                    window.parent.postMessage({
+                        type: 'worksheetHeight',
+                        height: scaledHeight + 24
+                    }, '*');
+                }
+            }
+
+            window.addEventListener('load', applyScale);
+            window.addEventListener('resize', applyScale);
+            setTimeout(applyScale, 50);
+            setTimeout(applyScale, 250);
+        })();
+    </script>
+}
+>>>>>>> master

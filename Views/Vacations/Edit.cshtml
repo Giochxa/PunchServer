@@ -1,0 +1,78 @@
+@model PunchServerMVC.Models.ViewModels.VacationFormViewModel
+
+@{
+    ViewData["Title"] = "Edit Vacation";
+}
+
+<h2>Edit Vacation</h2>
+
+<form asp-action="Edit" method="post">
+    <input type="hidden" asp-for="Vacation.Id" />
+
+    <div class="mb-3">
+        <label asp-for="Vacation.EmployeeId" class="form-label">Employee</label>
+        <select asp-for="Vacation.EmployeeId" id="vacationEmployeeId" class="form-select"
+                asp-items="@(new SelectList(Model.Employees, "Id", "FullName", Model.Vacation.EmployeeId))">
+            <option value="">-- Select Employee --</option>
+        </select>
+        <span asp-validation-for="Vacation.EmployeeId" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Vacation.VacationTypeId" class="form-label">Vacation Type</label>
+        <select asp-for="Vacation.VacationTypeId" class="form-select"
+                asp-items="@(new SelectList(Model.VacationTypes, "Id", "Name", Model.Vacation.VacationTypeId))">
+            <option value="">-- Select Vacation Type --</option>
+        </select>
+        <span asp-validation-for="Vacation.VacationTypeId" class="text-danger"></span>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="Vacation.StartDate" class="form-label">Start Date</label>
+            <input asp-for="Vacation.StartDate" type="date" class="form-control" />
+            <span asp-validation-for="Vacation.StartDate" class="text-danger"></span>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="Vacation.EndDate" class="form-label">End Date</label>
+            <input asp-for="Vacation.EndDate" type="date" class="form-control" />
+            <span asp-validation-for="Vacation.EndDate" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Vacation.Notes" class="form-label"></label>
+        <input asp-for="Vacation.Notes" class="form-control" />
+        <span asp-validation-for="Vacation.Notes" class="text-danger"></span>
+    </div>
+
+    <div class="form-check">
+        <input asp-for="Vacation.IsActive" class="form-check-input" />
+        <label asp-for="Vacation.IsActive" class="form-check-label">Is Active</label>
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-3">Update</button>
+    <a asp-action="Index" class="btn btn-secondary mt-3">Cancel</a>
+</form>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(function () {
+            var $emp = $('#vacationEmployeeId');
+
+            if ($emp.hasClass('select2-hidden-accessible')) {
+                $emp.select2('destroy');
+            }
+
+            $emp.select2({
+                width: '100%',
+                placeholder: 'Select Employee',
+                allowClear: true,
+                minimumResultsForSearch: 0
+            });
+        });
+    </script>
+}

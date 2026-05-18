@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -8,3 +9,17 @@
     <!-- <Content Include="wwwroot\**\*.*" CopyToOutputDirectory="PreserveNewest" /> -->
   </ItemGroup>
 </Project>
+=======
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="LiteDB" Version="5.0.21" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="10.0.0" />
+    <PackageReference Include="System.Threading.AccessControl" Version="10.0.0" />
+    <!-- <Content Include="wwwroot\**\*.*" CopyToOutputDirectory="PreserveNewest" /> -->
+  </ItemGroup>
+</Project>
+>>>>>>> master
