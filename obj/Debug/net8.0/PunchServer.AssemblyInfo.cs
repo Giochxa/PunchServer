@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PunchServer")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+722cb090eb7460427daa8796cc38644cc11d6df0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+25822f7049402f1b53b35860611459bcb0ffcc18")]
 [assembly: System.Reflection.AssemblyProductAttribute("PunchServer")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PunchServer")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
