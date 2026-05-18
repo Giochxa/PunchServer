@@ -1,0 +1,10 @@
+.vs/
+bin/
+obj/
+build-verify/
+Punchdata/
+*.db
+*.db-shm
+*.db-wal
+*.dll
+*.pdb
