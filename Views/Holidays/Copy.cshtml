@@ -1,0 +1,90 @@
+@model PunchServerMVC.Models.ViewModels.HolidayCopyViewModel
+
+@{
+    ViewData["Title"] = "Copy Holidays";
+}
+
+<h2>Copy Holidays</h2>
+
+<p class="text-muted">
+    Review holidays copied from @Model.SourceYear to @Model.TargetYear. Change dates, names, descriptions, or uncheck rows you do not want to create.
+</p>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        Please fix the highlighted rows before confirming.
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<form asp-action="CopyConfirm" method="post">
+    @Html.AntiForgeryToken()
+    <input asp-for="SourceYear" type="hidden" />
+    <input asp-for="TargetYear" type="hidden" />
+
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Copy</th>
+                <th>Source Date</th>
+                <th>New Date</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Active</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+        @for (var i = 0; i < Model.Holidays.Count; i++)
+        {
+            <tr>
+                <td>
+                    <input asp-for="Holidays[i].Include" class="form-check-input" />
+                    <input asp-for="Holidays[i].SourceDate" type="hidden" />
+                    <input asp-for="Holidays[i].AlreadyExists" type="hidden" />
+                </td>
+                <td>@Model.Holidays[i].SourceDate.ToString("dd.MM.yyyy")</td>
+                <td>
+                    <input asp-for="Holidays[i].Date" type="date" class="form-control" />
+                    <span asp-validation-for="Holidays[i].Date" class="text-danger"></span>
+                </td>
+                <td>
+                    <input asp-for="Holidays[i].Name" class="form-control" />
+                    <span asp-validation-for="Holidays[i].Name" class="text-danger"></span>
+                </td>
+                <td>
+                    <input asp-for="Holidays[i].Description" class="form-control" />
+                    <span asp-validation-for="Holidays[i].Description" class="text-danger"></span>
+                </td>
+                <td>
+                    <input asp-for="Holidays[i].IsActive" class="form-check-input" />
+                </td>
+                <td>
+                    @if (Model.Holidays[i].AlreadyExists)
+                    {
+                        <span class="badge bg-warning text-dark">Date exists</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success">New</span>
+                    }
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+
+    <div class="d-flex justify-content-between">
+        <a asp-controller="Settings" asp-action="Index" asp-route-activeTab="holidays" asp-route-year="@Model.SourceYear" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">Confirm Copy</button>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

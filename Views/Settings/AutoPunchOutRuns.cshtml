@@ -1,0 +1,134 @@
+@model List<PunchServerMVC.Models.AutoPunchOutRunLog>
+
+@{
+    ViewData["Title"] = "Auto Punch Out Runs";
+    var employees = ViewBag.AutoPunchOutEmployees as List<PunchServerMVC.Models.Employee> ?? new();
+    int? selectedEmployeeId = ViewBag.SelectedEmployeeId as int?;
+    DateTime filterFrom = ViewBag.FilterFrom is DateTime from ? from : DateTime.Today;
+    DateTime filterTo = ViewBag.FilterTo is DateTime to ? to : DateTime.Today;
+}
+
+<h2>Auto Punch Out Runs</h2>
+
+<div class="d-flex justify-content-between align-items-end mb-3">
+    <form method="get" class="row g-2 flex-grow-1 me-3">
+        <div class="col-md-3">
+            <label class="form-label">Employee</label>
+            <select id="autoPunchOutEmployeeFilter" name="employeeId" class="form-select">
+                <option value="">All Employees</option>
+                @foreach (var employee in employees)
+                {
+                    <option value="@employee.Id" selected="@(selectedEmployeeId == employee.Id ? "selected" : null)">@employee.FullName</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">From</label>
+            <input type="date" name="fromDate" class="form-control" value="@filterFrom.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">To</label>
+            <input type="date" name="toDate" class="form-control" value="@filterTo.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="col-md-3 d-flex align-items-end gap-2">
+            <button type="submit" class="btn btn-outline-primary">Filter</button>
+            <a asp-action="AutoPunchOutRuns" class="btn btn-outline-secondary">Reset</a>
+        </div>
+    </form>
+
+    <a asp-action="Index" asp-route-activeTab="administration" class="btn btn-secondary mb-0">Back</a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No Auto Punch Out runs yet.</div>
+}
+else
+{
+    @foreach (var run in Model)
+    {
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between">
+                <strong>@run.StartedAt.ToString("dd.MM.yyyy HH:mm:ss")</strong>
+                <span>@run.Status</span>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-4 align-items-center">
+                    <div><strong>Finished:</strong> @run.FinishedAt.ToString("dd.MM.yyyy HH:mm:ss")</div>
+                    <div><strong>Message:</strong> @(run.Message ?? "-")</div>
+                    <div><strong>Added Punches:</strong> @run.AddedPunches.Count</div>
+                </div>
+
+                @if (run.AddedPunches.Any())
+                {
+                    <div class="table-responsive mt-3">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Work Date</th>
+                                    <th>Punch Time</th>
+                                    <th>Schedule</th>
+                                    <th>Punch Id</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var item in run.AddedPunches)
+                            {
+                                <tr>
+                                    <td>@item.EmployeeName</td>
+                                    <td>@item.WorkDate.ToString("dd.MM.yyyy")</td>
+                                    <td>@item.PunchTimestamp.ToString("dd.MM.yyyy HH:mm:ss")</td>
+                                    <td>@item.ScheduleText</td>
+                                    <td>@item.PunchId</td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+
+<style>
+    .select2-container .select2-results__options { max-height: 400px !important; }
+    .select2-container--default .select2-results__option { padding: 8px 12px; }
+    .select2-container .select2-selection--single {
+        height: calc(1.5em + .75rem + 2px) !important;
+        border: 1px solid #ced4da;
+        border-radius: .375rem;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: calc(1.5em + .75rem) !important;
+        padding-left: .75rem;
+        padding-right: 2rem;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: calc(1.5em + .75rem + 2px) !important;
+        right: .5rem;
+    }
+</style>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(function () {
+            var $employee = $('#autoPunchOutEmployeeFilter');
+
+            if ($employee.hasClass('select2-hidden-accessible')) {
+                $employee.select2('destroy');
+            }
+
+            $employee.select2({
+                width: '100%',
+                placeholder: 'All Employees',
+                allowClear: true,
+                minimumResultsForSearch: 0
+            });
+        });
+    </script>
+}

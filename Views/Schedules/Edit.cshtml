@@ -1,0 +1,199 @@
+@model PunchServerMVC.Models.Schedule
+@{
+    ViewData["Title"] = "Edit Schedule";
+    var employees = ViewBag.Employees as IEnumerable<PunchServerMVC.Models.Employee>;
+    var templates = ViewBag.Templates as IEnumerable<PunchServerMVC.Models.ScheduleTemplate>;
+}
+
+<h2>Edit Schedule</h2>
+
+<form asp-action="Edit" method="post">
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" name="returnToCalendar" value="@((bool?)ViewBag.ReturnToCalendar == true ? "true" : "false")" />
+    <input type="hidden" name="calendarMonth" value="@ViewBag.CalendarMonth" />
+    <input type="hidden" name="calendarYear" value="@ViewBag.CalendarYear" />
+    <input type="hidden" name="calendarEmployeeId" value="@ViewBag.CalendarEmployeeId" />
+    <input type="hidden" name="calendarOrganisationId" value="@ViewBag.CalendarOrganisationId" />
+    <input type="hidden" name="calendarDepartmentId" value="@ViewBag.CalendarDepartmentId" />
+
+    <div class="mb-3">
+        <label>Employee</label>
+        <select asp-for="EmployeeId" class="form-control" id="employeeSelect"
+                asp-items="@(new SelectList(employees.Select(e => new {
+                    e.Id,
+                    e.FullName,
+                    Start = e.EmploymentStartDate?.ToString("yyyy-MM-dd"),
+                }), "Id", "FullName", Model.EmployeeId))">
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="StartDate"></label>
+        <input asp-for="StartDate" type="date" class="form-control" id="startDate" />
+        <span asp-validation-for="StartDate" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="EndDate"></label>
+        <input asp-for="EndDate" type="date" class="form-control" id="endDate" />
+        <span asp-validation-for="EndDate" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label>Template (optional)</label>
+        <select id="templateSelect" asp-for="ScheduleTemplateId" class="form-control">
+            <option value="">-- Select Template --</option>
+            @foreach (var t in templates)
+            {
+                <option 
+                    value="@t.Id"
+                    data-start="@t.ShiftStart.ToString("hh\\:mm")"
+                    data-end="@t.ShiftEnd.ToString("hh\\:mm")"
+                    data-type="@t.Type"
+                    data-break="@t.BreakMinutes"
+                    data-days="@string.Join(",", t.Days)"
+                    selected="@(t.Id == Model.ScheduleTemplateId ? "selected" : null)">
+                    @t.Name (@t.ShiftStart - @t.ShiftEnd)
+                </option>
+            }
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label>Shift Start</label>
+        <input asp-for="ShiftStart" type="time" class="form-control" id="shiftStart" />
+    </div>
+
+    <div class="mb-3">
+        <label>Shift End</label>
+        <input asp-for="ShiftEnd" type="time" class="form-control" id="shiftEnd" />
+    </div>
+
+    <div class="mb-3">
+        <label>Break (minutes)</label>
+        <input asp-for="BreakMinutes" type="number" class="form-control" id="breakMinutes" />
+    </div>
+
+    <div class="mb-3">
+        <label>Schedule Type</label>
+        <input asp-for="ScheduleType" class="form-control" id="scheduleType" />
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Note"></label>
+        <textarea asp-for="Note" class="form-control" rows="2"></textarea>
+        <span asp-validation-for="Note" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label>Days</label><br />
+        @foreach (DayOfWeek day in Enum.GetValues(typeof(DayOfWeek)))
+        {
+            <label class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" name="Days" value="@day" @(Model.Days.Contains(day) ? "checked" : "") />
+                <span class="form-check-label">@day</span>
+            </label>
+        }
+    </div>
+    <div asp-validation-summary="All" class="text-danger"></div>
+
+    <button type="submit" class="btn btn-success mt-3">Save</button>
+    @if ((bool?)ViewBag.ReturnToCalendar == true)
+    {
+        <a class="btn btn-secondary mt-3"
+           href="@Url.Action("Calendar", "Home", new {
+               employeeId = ViewBag.CalendarEmployeeId,
+               organisationId = ViewBag.CalendarOrganisationId,
+               departmentId = ViewBag.CalendarDepartmentId,
+               month = ViewBag.CalendarMonth,
+               year = ViewBag.CalendarYear
+           })">Cancel</a>
+    }
+    else
+    {
+        <a href="/Schedules" class="btn btn-secondary mt-3">Cancel</a>
+    }
+</form>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+
+<style>
+    .select2-container .select2-selection--single {
+        height: calc(1.5em + .75rem + 2px) !important;
+        border: 1px solid #ced4da;
+        border-radius: .375rem;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: calc(1.5em + .75rem) !important;
+        padding-left: .75rem;
+        padding-right: 2rem;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: calc(1.5em + .75rem + 2px) !important;
+        right: .5rem;
+    }
+</style>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(function () {
+            $('#employeeSelect').select2({
+                width: '100%',
+                placeholder: '-- Select Employee --'
+            });
+        });
+
+        function getSundayOfWeek(dateString) {
+            if (!dateString) return "";
+
+            const d = new Date(dateString + "T00:00:00");
+            const day = d.getDay(); // 0=Sunday ... 6=Saturday
+            d.setDate(d.getDate() + ((7 - day) % 7));
+
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${dd}`;
+        }
+
+        function refreshEndDateFromStart() {
+            const startVal = document.getElementById("startDate").value;
+            if (!startVal) return;
+
+            const sunday = getSundayOfWeek(startVal);
+            if (sunday) {
+                document.getElementById("endDate").value = sunday;
+            }
+        }
+
+        document.getElementById("templateSelect").addEventListener("change", function () {
+            const selected = this.options[this.selectedIndex];
+            document.getElementById("shiftStart").value = selected.dataset.start || "";
+            document.getElementById("shiftEnd").value = selected.dataset.end || "";
+            document.getElementById("scheduleType").value = selected.dataset.type || "";
+            document.getElementById("breakMinutes").value = selected.dataset.break || "";
+
+            const days = selected.dataset.days;
+            if (days) {
+                const selectedDays = days.split(",");
+                document.querySelectorAll("input[name='Days']").forEach(cb => {
+                    cb.checked = selectedDays.includes(cb.value);
+                });
+            }
+        });
+
+        document.getElementById("employeeSelect").addEventListener("change", function () {
+            const selected = this.options[this.selectedIndex];
+            document.getElementById("startDate").value = selected.dataset.start || "";
+            refreshEndDateFromStart();
+        });
+
+        document.getElementById("startDate").addEventListener("change", function () {
+            refreshEndDateFromStart();
+        });
+    </script>
+}

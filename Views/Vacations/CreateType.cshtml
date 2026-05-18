@@ -1,0 +1,40 @@
+@model PunchServerMVC.Models.VacationType
+
+@{
+    ViewData["Title"] = "Create Vacation Type";
+}
+
+<h2>Create Vacation Type</h2>
+
+<form asp-action="CreateType" method="post">
+    <div class="mb-3">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Abbreviation" class="form-label"></label>
+        <input asp-for="Abbreviation" class="form-control" />
+        <span asp-validation-for="Abbreviation" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="IntegrationValue" class="form-label">Integration Value</label>
+        <input asp-for="IntegrationValue" class="form-control" />
+        <span asp-validation-for="IntegrationValue" class="text-danger"></span>
+    </div>
+
+    <div class="form-check mb-3">
+        <input asp-for="DoesNotCountAsUsedVacations" class="form-check-input" />
+        <label asp-for="DoesNotCountAsUsedVacations" class="form-check-label">Does not count as Used Vacations</label>
+    </div>
+
+    <div class="form-check">
+        <input asp-for="IsActive" class="form-check-input" />
+        <label asp-for="IsActive" class="form-check-label">Is Active</label>
+    </div>
+
+    <button type="submit" class="btn btn-success mt-3">Save</button>
+    <a asp-action="Index" class="btn btn-secondary mt-3">Cancel</a>
+</form>

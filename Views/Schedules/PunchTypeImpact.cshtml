@@ -1,0 +1,103 @@
+@model PunchServerMVC.Models.SchedulePunchTypeImpactViewModel
+
+@{
+    ViewData["Title"] = "PunchType Impact Preview";
+}
+
+<h2>PunchType Impact Preview</h2>
+
+@if (TempData["Warning"] != null)
+{
+    <div class="alert alert-warning">@TempData["Warning"]</div>
+}
+
+<div class="mb-3">
+    <strong>Employee:</strong> @Model.EmployeeName <br />
+    <strong>Schedule:</strong> @Model.StartDate.ToShortDateString() – @Model.EndDate.ToShortDateString()
+    (@Model.ShiftStart - @Model.ShiftEnd) <br />
+    <strong>ScheduleType:</strong> @Model.ScheduleType
+</div>
+
+@if (Model.Rows == null || Model.Rows.Count == 0)
+{
+    <div class="alert alert-success">No AUTO punches would change.</div>
+
+    <form asp-action="SkipPunchTypeUpdates" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="returnToCalendar" value="@((bool?)ViewBag.ReturnToCalendar == true ? "true" : "false")" />
+        <input type="hidden" name="calendarMonth" value="@ViewBag.CalendarMonth" />
+        <input type="hidden" name="calendarYear" value="@ViewBag.CalendarYear" />
+        <input type="hidden" name="calendarEmployeeId" value="@ViewBag.CalendarEmployeeId" />
+        <input type="hidden" name="calendarOrganisationId" value="@ViewBag.CalendarOrganisationId" />
+        <input type="hidden" name="calendarDepartmentId" value="@ViewBag.CalendarDepartmentId" />
+        <button type="submit" class="btn btn-primary">Back</button>
+    </form>
+}
+else
+{
+    <form asp-action="ApplyPunchTypeUpdates" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="scheduleId" value="@Model.ScheduleId" />
+        <input type="hidden" name="returnToCalendar" value="@((bool?)ViewBag.ReturnToCalendar == true ? "true" : "false")" />
+        <input type="hidden" name="calendarMonth" value="@ViewBag.CalendarMonth" />
+        <input type="hidden" name="calendarYear" value="@ViewBag.CalendarYear" />
+        <input type="hidden" name="calendarEmployeeId" value="@ViewBag.CalendarEmployeeId" />
+        <input type="hidden" name="calendarOrganisationId" value="@ViewBag.CalendarOrganisationId" />
+        <input type="hidden" name="calendarDepartmentId" value="@ViewBag.CalendarDepartmentId" />
+
+        <div class="mb-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectAll(true)">Select all</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="selectAll(false)">Clear</button>
+        </div>
+
+        <table class="table table-striped table-sm">
+            <thead>
+                <tr>
+                    <th style="width:40px;"></th>
+                    <th>Timestamp</th>
+                    <th>Current</th>
+                    <th>Proposed</th>
+                    <th>Reason</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model.Rows)
+                {
+                    <tr>
+                        <td>
+                            <input type="checkbox"
+                                   name="selectedPunchIds"
+                                   value="@r.PunchId"
+                                   checked="checked" />
+                        </td>
+                        <td>@r.Timestamp.ToString("dd.MM.yyyy HH:mm")</td>
+                        <td>@r.CurrentType</td>
+                        <td><strong>@r.ProposedType</strong></td>
+                        <td>@r.Reason</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Apply selected updates</button>
+    </form>
+
+    <form asp-action="SkipPunchTypeUpdates" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="returnToCalendar" value="@((bool?)ViewBag.ReturnToCalendar == true ? "true" : "false")" />
+        <input type="hidden" name="calendarMonth" value="@ViewBag.CalendarMonth" />
+        <input type="hidden" name="calendarYear" value="@ViewBag.CalendarYear" />
+        <input type="hidden" name="calendarEmployeeId" value="@ViewBag.CalendarEmployeeId" />
+        <input type="hidden" name="calendarOrganisationId" value="@ViewBag.CalendarOrganisationId" />
+        <input type="hidden" name="calendarDepartmentId" value="@ViewBag.CalendarDepartmentId" />
+        <button type="submit" class="btn btn-outline-secondary">Skip</button>
+    </form>
+
+    <script>
+        function selectAll(on) {
+            const boxes = document.querySelectorAll('input[name="selectedPunchIds"]');
+            boxes.forEach(b => b.checked = on);
+        }
+    </script>
+}

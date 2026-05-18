@@ -1,0 +1,8 @@
+@model PunchServerMVC.Models.Employee
+<h2>Delete Employee</h2>
+<form asp-action="Delete" method="post">
+    <input type="hidden" asp-for="Id" />
+    <p>Are you sure you want to delete employee: <strong>@Model.FullName</strong>?</p>
+    <button type="submit" class="btn btn-danger">Yes, Delete</button>
+    <a href="/Employees" class="btn btn-secondary">Cancel</a>
+</form>

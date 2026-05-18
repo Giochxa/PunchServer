@@ -1,0 +1,141 @@
+@model PunchServerMVC.Models.ViewModels.EmployeeFormViewModel
+
+@{
+    ViewData["Title"] = "Add Employee";
+}
+
+<h2>Add New Employee</h2>
+@Html.ValidationSummary(true, "", new { @class = "text-danger" })
+<form asp-action="Create" method="post">
+    <div class="form-group mb-3">
+        <label asp-for="Employee.FullName" class="form-label">Full Name</label>
+        <input asp-for="Employee.FullName" class="form-control" />
+        <span asp-validation-for="Employee.FullName" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="Employee.UniqueId" class="form-label">Unique ID</label>
+        <input asp-for="Employee.UniqueId" class="form-control" />
+        <span asp-validation-for="Employee.UniqueId" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="Employee.PersonalId" class="form-label">Personal ID</label>
+        <input asp-for="Employee.PersonalId" class="form-control" />
+        <span asp-validation-for="Employee.PersonalId" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="Employee.Gender" class="form-label">Gender</label>
+        <select asp-for="Employee.Gender" class="form-select">
+            <option value="">-- Select Gender --</option>
+            <option value="მდედრობითი">მდედრობითი</option>
+            <option value="მამრობითი">მამრობითი</option>
+        </select>
+        <span asp-validation-for="Employee.Gender" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="Employee.BirthDate" class="form-label">Birth Date</label>
+        <input asp-for="Employee.BirthDate" class="form-control" type="date" />
+        <span asp-validation-for="Employee.BirthDate" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="Employee.OrganisationId" class="form-label">Organisation</label>
+        <select asp-for="Employee.OrganisationId" class="form-select" id="organisationDropdown"
+                asp-items="@(new SelectList(Model.Organisations, "Id", "Name", Model.Employee.OrganisationId))">
+            <option value="">-- Select Organisation --</option>
+        </select>
+        <span asp-validation-for="Employee.OrganisationId" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="Employee.DepartmentId" class="form-label">Department</label>
+        <select asp-for="Employee.DepartmentId" class="form-select" id="departmentDropdown">
+            <option value="">-- Select Department --</option>
+            @if (Model.Employee.OrganisationId != null)
+            {
+                foreach (var dept in Model.Departments.Where(d => d.OrganisationId == Model.Employee.OrganisationId))
+                {
+                    <option value="@dept.Id">@dept.Name</option>
+                }
+            }
+        </select>
+        <span asp-validation-for="Employee.DepartmentId" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="Employee.EmploymentStartDate" class="form-label">Employment Start Date</label>
+        <input asp-for="Employee.EmploymentStartDate" class="form-control" type="date" />
+        <span asp-validation-for="Employee.EmploymentStartDate" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="Employee.EmploymentEndDate" class="form-label">Employment End Date</label>
+        <input asp-for="Employee.EmploymentEndDate" class="form-control" type="date" />
+        <span asp-validation-for="Employee.EmploymentEndDate" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Employee.Position" class="control-label"></label>
+        <input asp-for="Employee.Position" class="form-control" />
+        <span asp-validation-for="Employee.Position" class="text-danger"></span>
+    </div>
+
+    <div class="form-group mb-3">
+        <label asp-for="Employee.VacationsPerYear" class="form-label">Vacations Per Year</label>
+        <input asp-for="Employee.VacationsPerYear" type="number" class="form-control" />
+        <span asp-validation-for="Employee.VacationsPerYear" class="text-danger"></span>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label asp-for="Employee.RemainingVacations" class="form-label">Remaining Vacations</label>
+            <input asp-for="Employee.RemainingVacations" type="number" class="form-control" />
+            <span asp-validation-for="Employee.RemainingVacations" class="text-danger"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="Employee.RemainingVacationsFrom" class="form-label">Remaining Vacations from</label>
+            <input asp-for="Employee.RemainingVacationsFrom" type="date" class="form-control" />
+            <span asp-validation-for="Employee.RemainingVacationsFrom" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="form-check mb-3">
+        <input asp-for="Employee.IsActive" class="form-check-input" />
+        <label asp-for="Employee.IsActive" class="form-check-label">Is Active</label>
+    </div>
+
+    <div class="form-check mb-3">
+        <input asp-for="Employee.DoesNotNeedSchedule" class="form-check-input" />
+        <label asp-for="Employee.DoesNotNeedSchedule" class="form-check-label">Does Not Need Schedule</label>
+    </div>
+
+    <button type="submit" class="btn btn-success">Save</button>
+    <a href="/Employees" class="btn btn-secondary">Cancel</a>
+</form>
+
+@section Scripts {
+    <script>
+        document.getElementById('organisationDropdown').addEventListener('change', function () {
+            const orgId = this.value;
+            const deptDropdown = document.getElementById('departmentDropdown');
+            deptDropdown.innerHTML = '<option value="">-- Select Department --</option>';
+
+            if (!orgId) return;
+
+            fetch(`/api/departments/by-organisation/${orgId}`)
+                .then(res => res.json())
+                .then(data => {
+                    data.forEach(dept => {
+                        const opt = document.createElement('option');
+                        opt.value = dept.id;
+                        opt.text = dept.name;
+                        deptDropdown.appendChild(opt);
+                    });
+                })
+                .catch(err => console.error('Error loading departments:', err));
+        });
+    </script>
+}

@@ -1,0 +1,287 @@
+@model List<PunchServerMVC.Models.Employee>
+
+@using PunchServerMVC.Models
+
+@{
+    ViewData["Title"] = "Weekly Schedule Grid";
+
+    var schedules = ViewBag.Schedules as List<Schedule> ?? new List<Schedule>();
+
+    var weekStart = ViewBag.WeekStart is DateTime d1 ? d1 : DateTime.Today;
+    var weekEnd = ViewBag.WeekEnd is DateTime d2 ? d2 : weekStart.AddDays(6);
+
+    int? selectedEmployeeId = ViewBag.SelectedEmployeeId as int?;
+    string selectedScheduleType = ViewBag.SelectedScheduleType as string;
+    string selectedScheduleStatus = ViewBag.SelectedScheduleStatus as string ?? "all";
+
+
+    var allEmployees = ViewBag.AllEmployees as List<Employee> ?? new List<Employee>();
+    var scheduleTypes = ViewBag.ScheduleTypes as List<string> ?? new List<string>();
+
+    // 7 dates for the selected week (Mon..Sun)
+    var weekDays = Enumerable.Range(0, 7).Select(i => weekStart.AddDays(i)).ToList();
+
+    var departments = ViewBag.Departments as List<Department> ?? new();
+    int? selectedDepartmentId = ViewBag.SelectedDepartmentId as int?;
+    var holidaysInWeek = ViewBag.HolidaysInWeek as HashSet<DateTime> ?? new HashSet<DateTime>();
+}
+
+<style>
+    .weekend-header {
+        background-color: #6b0b0b;
+        font-weight: bold;
+        color: #6b0b0b;
+    }
+    .weekend-cell {
+        background-color: #6b0b0b;
+        color: #6b0b0b;
+    }
+
+    /* Match Bootstrap input height for Select2 */
+    .select2-container .select2-selection--single {
+        height: calc(1.5em + .75rem + 2px) !important;
+        border: 1px solid #ced4da;
+        border-radius: .375rem;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: calc(1.5em + .75rem) !important;
+        padding-left: .75rem;
+        padding-right: 2rem;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: calc(1.5em + .75rem + 2px) !important;
+        right: .5rem;
+    }
+
+    .select2-container .select2-results__options {
+        max-height: 400px !important;
+    }
+
+    .select2-container--default .select2-results__option {
+        padding: 8px 12px;
+    }
+
+    @@media print {
+        body * {
+            visibility: hidden;
+        }
+
+        #gridPrintArea, #gridPrintArea * {
+            visibility: visible;
+        }
+
+        #gridPrintArea {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+        }
+
+        .no-print {
+            display: none !important;
+        }
+
+        .print-hide {
+            display: none !important;
+        }
+    }
+
+</style>
+
+<h2>Weekly Grid Schedule</h2>
+
+<form method="get" asp-action="Grid" class="row g-2 mb-3 no-print">
+    <div class="col-auto">
+        <label class="form-label d-block text-center fw-bold">
+    Week (pick any day, it will use Monday)
+</label>
+        <input type="date" name="weekStart" class="form-control"
+               value="@weekStart.ToString("yyyy-MM-dd")" />
+    </div>
+
+    <div class="col-auto">
+        <label class="form-label d-block text-center fw-bold">
+    Department
+</label>
+
+        <select class="form-select" name="departmentId">
+            <option value="">All</option>
+            @foreach (var d in departments)
+            {
+                <option value="@d.Id"
+                        selected="@(selectedDepartmentId == d.Id ? "selected" : null)">
+                    @d.Name
+                </option>
+            }
+        </select>
+    </div>
+
+    <div class="col-auto" style="min-width:320px;">
+        <label class="form-label d-block text-center fw-bold">
+    Employee
+</label>
+
+        <select id="employeeIdGrid" class="form-select" name="employeeId">
+            <option value="">All</option>
+            @foreach (var e in allEmployees)
+            {
+                <option value="@e.Id" selected="@(selectedEmployeeId == e.Id ? "selected" : null)">
+                    @e.FullName
+                </option>
+            }
+        </select>
+    </div>
+
+    <div class="col-auto">
+        <label class="form-label d-block text-center fw-bold">
+    Schedule Type
+</label>
+
+        <select class="form-select" name="scheduleType">
+            <option value="">All</option>
+            @foreach (var t in scheduleTypes)
+            {
+                <option value="@t" selected="@(string.Equals(selectedScheduleType, t, StringComparison.OrdinalIgnoreCase) ? "selected" : null)">
+                    @t
+                </option>
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+    <label class="form-label d-block text-center fw-bold">
+    Schedules
+</label>
+
+    <select class="form-select" name="scheduleStatus">
+        <option value="all" selected="@(selectedScheduleStatus == "all" ? "selected" : null)">All</option>
+        <option value="with" selected="@(selectedScheduleStatus == "with" ? "selected" : null)">With schedule</option>
+        <option value="without" selected="@(selectedScheduleStatus == "without" ? "selected" : null)">Without schedule</option>
+    </select>
+</div>
+
+
+    <div class="col-auto align-self-end">
+        <button type="submit" class="btn btn-primary">Apply</button>
+        <a asp-action="Grid" class="btn btn-secondary">This week</a>
+        <button type="button" class="btn btn-outline-dark" onclick="window.print()">Print</button>
+    </div>
+</form>
+
+<div id="gridPrintArea">
+<div class="mb-2">
+    <strong>Showing:</strong> @weekStart.ToString("dd MMM yyyy") – @weekEnd.ToString("dd MMM yyyy")
+</div>
+
+<table class="table table-bordered text-center">
+    <thead>
+        <tr>
+            <th>Employee</th>
+            @foreach (var date in weekDays)
+            {
+                var isWeekend = date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday;
+                var isHoliday = holidaysInWeek.Contains(date.Date);
+                <th class="@((isWeekend || isHoliday) ? "weekend-header" : "")">
+                    @date.ToString("ddd")<br />
+                    <small>@date.ToString("dd MMM")</small>
+                </th>
+            }
+            <th class="text-center print-hide" style="width:120px;">Add Schedule</th>
+        </tr>
+        
+    </thead>
+
+    <tbody>
+        @foreach (var emp in Model)
+        {
+            <tr>
+                    <td class="text-start">
+                        <div class="d-flex justify-content-between align-items-center gap-2">
+                            <span>@emp.FullName</span>
+                            @* <a class="btn btn-success btn-sm"     asp-controller="Schedules"     asp-action="Create"
+                                   asp-route-employeeId="@emp.Id"     asp-route-startDate="@weekStart.ToString("yyyy-MM-dd")">
+                                + Schedule
+                            </a> *@
+                        </div>
+                    </td>
+
+                @foreach (var date in weekDays)
+                {
+                    var isWeekend = date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday;
+                    var isHoliday = holidaysInWeek.Contains(date.Date);
+
+                    // filter schedules by employee + day-of-week + date inside Start/End range
+                    var dailySchedules = schedules
+                        .Where(s =>
+                            s.EmployeeId == emp.Id &&
+                            s.Days != null &&
+                            s.Days.Contains(date.DayOfWeek) &&
+                            s.StartDate.Date <= date.Date &&
+                            s.EndDate.Date >= date.Date)
+                        .ToList();
+
+                    <td class="@((isWeekend || isHoliday) ? "weekend-cell" : "")">
+                        @if (dailySchedules.Any())
+                        {
+                            foreach (var sched in dailySchedules)
+                            {
+                                <div class="mb-1">
+                                    <strong>@sched.ShiftStart.ToString("hh\\:mm") - @sched.ShiftEnd.ToString("hh\\:mm")</strong><br />
+                                    <small>@sched.ScheduleType</small>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <span>—</span>
+                        }
+                    </td>
+                }
+                <td class="text-center align-middle print-hide">
+    <a class="btn btn-success btn-sm"
+       asp-controller="Schedules"
+       asp-action="Create"
+       asp-route-employeeId="@emp.Id"
+       asp-route-startDate="@weekStart.ToString("yyyy-MM-dd")">
+        + Scehdule
+    </a>
+</td>
+
+            </tr>
+        }
+    </tbody>
+</table>
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        $(function () {
+            var $emp = $('#employeeIdGrid');
+
+            // prevent double init
+            if ($emp.hasClass('select2-hidden-accessible')) {
+                $emp.select2('destroy');
+            }
+
+            $emp.select2({
+                width: '100%',
+                placeholder: 'All',
+                allowClear: true,
+
+                // ✅ ALWAYS show search input inside dropdown
+                minimumResultsForSearch: 0
+            });
+
+            // OPTIONAL: focus typing when opened
+            $emp.on('select2:open', function () {
+                setTimeout(function () {
+                    var el = document.querySelector('.select2-container--open .select2-search__field');
+                    if (el) el.focus();
+                }, 0);
+            });
+        });
+    </script>
+}

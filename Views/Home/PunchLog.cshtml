@@ -1,0 +1,357 @@
+@using PunchServerMVC.Models.ViewModels
+@model PunchLogViewModel
+
+@{
+    ViewData["Title"] = "Punch Log";
+    var hidePunchImages = (ViewBag.HidePunchImages as bool?) ?? false;
+}
+
+<h2>Punch Log</h2>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-2">
+        <label class="form-label">From</label>
+        <input type="date" name="from" class="form-control" value="@Model.From.ToString("yyyy-MM-dd")" />
+    </div>
+
+    <div class="col-md-2">
+        <label class="form-label">To</label>
+        <input type="date" name="to" class="form-control" value="@Model.To.ToString("yyyy-MM-dd")" />
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label">Employee</label>
+        <select id="employeeIdFilter" name="employeeId" class="form-select">
+            <option value="">All Employees</option>
+            @foreach (var emp in Model.Employees)
+            {
+                <option value="@emp.Id" selected="@(Model.EmployeeId == emp.Id ? "selected" : null)">
+                    @emp.FullName
+                </option>
+            }
+        </select>
+    </div>
+
+    <div class="col-md-2">
+        <label class="form-label">Punch Type</label>
+        <select name="punchType" class="form-select">
+            <option value="" selected="@(string.IsNullOrWhiteSpace(Model.PunchType))">All</option>
+            <option value="In" selected="@(Model.PunchType == "In")">In</option>
+            <option value="Out" selected="@(Model.PunchType == "Out")">Out</option>
+        </select>
+    </div>
+
+    <div class="col-md-2">
+        <label class="form-label">Punch Condition</label>
+        <select name="punchCondition" class="form-select">
+            <option value="" selected="@(string.IsNullOrWhiteSpace(Model.PunchCondition))">All</option>
+            <option value="auto" selected="@(Model.PunchCondition == "auto")">Auto</option>
+            <option value="autoB" selected="@(Model.PunchCondition == "autoB")">Auto Ⓑ</option>
+            <option value="edited" selected="@(Model.PunchCondition == "edited")">Edited manually</option>
+            <option value="added" selected="@(Model.PunchCondition == "added")">Added manually</option>
+        </select>
+    </div>
+
+    <div class="col-12 d-flex justify-content-end align-items-end gap-2 flex-wrap">
+        <button type="submit" class="btn btn-primary">Go</button>
+        <a class="btn btn-outline-secondary"
+           href="@Url.Action("PunchLog", new { from = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day).ToString("yyyy-MM-dd"), to = new DateTime(DateTime.Now.Year, DateTime.Now.Month, DateTime.Now.Day).ToString("yyyy-MM-dd") })">
+            Reset to current day
+        </a>
+
+        <button type="button" class="btn btn-success"
+                onclick="openAddPunchModal()">
+            + Add Punch
+        </button>
+    </div>
+</form>
+
+<table class="table table-bordered table-sm align-middle">
+    <thead>
+        <tr>
+            <th>Timestamp</th>
+            <th>Punch Type</th>
+            <th>Employee</th>
+            <th>Created At</th>
+            <th>Manual</th>
+            <th>Note</th>
+            @if (!hidePunchImages)
+            {
+                <th>Image</th>
+            }
+            <th style="width:120px;">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var punch in Model.Punches)
+        {
+            string manualText =
+                punch.IsAutoPunchOut ? "Auto Ⓑ" :
+                punch.IsManualEdited ? "Edited manually" :
+                punch.IsManualCreated ? "Added manually" :
+                "Auto";
+
+            <tr>
+                <td>@punch.Timestamp.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                <td>@punch.PunchType</td>
+                <td>@(punch.Employee?.FullName ?? $"Employee #{punch.EmployeeId}")</td>
+                <td>@punch.CreatedAt.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                <td>@manualText</td>
+                <td>@punch.Note</td>
+                @if (!hidePunchImages)
+                {
+                    <td>
+                        @if (!string.IsNullOrWhiteSpace(punch.ImageUrl))
+                        {
+                            <img src="/punch_images/@punch.ImageUrl"
+                                 alt="Punch Image"
+                                 style="width:100px;height:auto;"
+                                 onerror="this.style.display='none'" />
+                        }
+                    </td>
+                }
+                <td>
+                    <button type="button" class="btn btn-sm btn-outline-primary"
+                            onclick='openEditPunchModal(@punch.Id, "@punch.Timestamp.ToString("yyyy-MM-dd")", "@punch.Timestamp.ToString("HH:mm")", "@punch.PunchType", @Html.Raw(System.Text.Json.JsonSerializer.Serialize(punch.Note ?? string.Empty)))'>
+                        ✏️
+                    </button>
+
+                    <button type="button" class="btn btn-sm btn-outline-danger"
+                            onclick="deletePunch(@punch.Id)">
+                        🗑️
+                    </button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Add Punch Modal -->
+<div class="modal fade" id="addPunchModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="AddPunchFromPunchLog" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Punch</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <!-- Preserve filters -->
+                    <input type="hidden" name="from" value="@Model.From.ToString("yyyy-MM-dd")" />
+                    <input type="hidden" name="to" value="@Model.To.ToString("yyyy-MM-dd")" />
+                    <input type="hidden" name="filterPunchType" value="@Model.PunchType" />
+                    <input type="hidden" name="filterPunchCondition" value="@Model.PunchCondition" />
+                    <input type="hidden" name="filterEmployeeId" value="@Model.EmployeeId" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Employee</label>
+                        <select id="employeeIdAdd" name="employeeId" class="form-select" required>
+                            @foreach (var emp in Model.Employees)
+                            {
+                                <option value="@emp.Id" selected="@(Model.EmployeeId == emp.Id ? "selected" : null)">
+                                    @emp.FullName
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Date</label>
+                        <input type="date" name="punchDate" class="form-control" required value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Time</label>
+                        <input type="time" name="punchTime" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Type</label>
+                        <select name="punchType" class="form-select" required>
+                            <option value="In">In</option>
+                            <option value="Out">Out</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Note</label>
+                        <textarea name="note" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Punch Modal -->
+<div class="modal fade" id="editPunchModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="EditPunchFromPunchLog" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Punch</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    <!-- Preserve filters -->
+                    <input type="hidden" name="from" value="@Model.From.ToString("yyyy-MM-dd")" />
+                    <input type="hidden" name="to" value="@Model.To.ToString("yyyy-MM-dd")" />
+                    <input type="hidden" name="filterPunchType" value="@Model.PunchType" />
+                    <input type="hidden" name="filterPunchCondition" value="@Model.PunchCondition" />
+                    <input type="hidden" name="filterEmployeeId" value="@Model.EmployeeId" />
+
+                    <input type="hidden" name="punchId" id="editPunchId" />
+
+                    <div class="mb-3">
+                        <label class="form-label">Date</label>
+                        <input type="date" name="punchDate" id="editPunchDate" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Time</label>
+                        <input type="time" name="punchTime" id="editPunchTime" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Type</label>
+                        <select name="punchType" id="editPunchType" class="form-select" required>
+                            <option value="In">In</option>
+                            <option value="Out">Out</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Note</label>
+                        <textarea name="note" id="editPunchNote" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<form id="deletePunchForm" asp-action="DeletePunchFromPunchLog" method="post" style="display:none;">
+    <input type="hidden" name="punchId" id="deletePunchId" />
+
+    <!-- Preserve filters -->
+    <input type="hidden" name="from" value="@Model.From.ToString("yyyy-MM-dd")" />
+    <input type="hidden" name="to" value="@Model.To.ToString("yyyy-MM-dd")" />
+    <input type="hidden" name="filterPunchType" value="@Model.PunchType" />
+    <input type="hidden" name="filterPunchCondition" value="@Model.PunchCondition" />
+    <input type="hidden" name="filterEmployeeId" value="@Model.EmployeeId" />
+</form>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+
+<style>
+    /* Match Bootstrap input height for Select2 */
+    .select2-container .select2-selection--single {
+        height: calc(1.5em + .75rem + 2px) !important;
+        border: 1px solid #ced4da;
+        border-radius: .375rem;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: calc(1.5em + .75rem) !important;
+        padding-left: .75rem;
+        padding-right: 2rem;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: calc(1.5em + .75rem + 2px) !important;
+        right: .5rem;
+    }
+    .select2-container .select2-results__options {
+        max-height: 400px !important;
+    }
+
+    .select2-container--default .select2-results__option {
+        padding: 8px 12px;
+    }
+</style>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        function initEmployeeSelect2() {
+            var $filter = $('#employeeIdFilter');
+            if ($filter.length) {
+                if ($filter.hasClass('select2-hidden-accessible')) $filter.select2('destroy');
+                $filter.select2({
+                    width: '100%',
+                    placeholder: 'All Employees',
+                    allowClear: true,
+                    minimumResultsForSearch: 0
+                });
+            }
+
+            var $add = $('#employeeIdAdd');
+            if ($add.length) {
+                if ($add.hasClass('select2-hidden-accessible')) $add.select2('destroy');
+                $add.select2({
+                    width: '100%',
+                    dropdownParent: $('#addPunchModal'),
+                    minimumResultsForSearch: 0
+                });
+            }
+        }
+
+        $(function () {
+            initEmployeeSelect2();
+
+            // Re-init when modal is shown (Bootstrap sometimes moves focus/DOM)
+            $('#addPunchModal').on('shown.bs.modal', function () {
+                initEmployeeSelect2();
+            });
+        });
+
+        function openAddPunchModal() {
+            var modal = new bootstrap.Modal(document.getElementById('addPunchModal'));
+            modal.show();
+        }
+
+        function openEditPunchModal(punchId, date, time, type, note) {
+            document.getElementById('editPunchId').value = punchId;
+            document.getElementById('editPunchDate').value = date;
+            document.getElementById('editPunchTime').value = time;
+            document.getElementById('editPunchType').value = type;
+            document.getElementById('editPunchNote').value = note || '';
+
+            var modal = new bootstrap.Modal(document.getElementById('editPunchModal'));
+            modal.show();
+        }
+
+        function deletePunch(punchId) {
+            if (!confirm("Delete this punch?")) return;
+            document.getElementById('deletePunchId').value = punchId;
+            document.getElementById('deletePunchForm').submit();
+        }
+    </script>
+}
